@@ -14,6 +14,7 @@ import {
 import { refreshJobs, loadJobResults } from '../actions/jobs';
 import { setExplorerContent } from '../actions/explorer';
 import { refreshDatasets } from '../actions/datasets';
+import { parseJobs, parseDatasets, parseMembers } from './jesParse';
 
 const PromiseFtp = require('promise-ftp');
 
@@ -137,34 +138,13 @@ class JES {
       .then(() => this.ftp.list(''))
       .then(results => {
         console.log('Checking results of list: ', results);
-        // Because the mainframe returns an information message if the queue is empty,
-        // this is an error
-        if (!results || results.length === 0) {
-          throw new Error("Unable to retrieve jobs from the mainframe JES Queue.");
-        }
-        // The mainframe will provide an informational string back if no jobs are found.
-        // We need to explicitly check for this and any other such informational messages.
-        else if (results[0] === "No jobs found on Held queue") {
-          store.dispatch(refreshJobs({}));
-          store.dispatch(setIsSubmitting(false));
-          store.dispatch(setIsRetrieving(false));
-        } else {
-          let jobs = {}
-          results.forEach((job) => {
-            let jobSplit = job.trim().split(/\ +/);
-            let jobID = jobSplit[1];
-            jobs[jobID] = {
-              owner: jobSplit[0],
-              status: jobSplit[2],
-              numberOfSpoolFiles: job.includes('Spool Files') ? jobSplit[3] : null,
-              jobID: jobID,
-              fullString: job.trim()
-            };
-          });
-          store.dispatch(refreshJobs(jobs));
-          store.dispatch(setIsSubmitting(false));
-          store.dispatch(setIsRetrieving(false));
-        }
+        // parseJobs throws on an unreadable queue and returns {} for the known
+        // empty-queue informational message; both cases dispatch refreshJobs
+        // and clear the flags, exactly as before.
+        const jobs = parseJobs(results);
+        store.dispatch(refreshJobs(jobs));
+        store.dispatch(setIsSubmitting(false));
+        store.dispatch(setIsRetrieving(false));
       })
       .catch(err => this._errorLookup(err));
   }
@@ -251,42 +231,8 @@ class JES {
       .then(() => this.ftp.list(''))
       .then(results => {
         console.log('Checking results of list: ', results);
-        if (!results || results.length === 0) {
-          throw new Error("Unable to list datasets.");
-        }
-        results.shift(); // Filter out the first row, which is table headers
-        let highLevelQualifier = store.getState().config.ftpUserName + '.';
-        results.forEach((dataset) => {
-          const datasetSplit = dataset.trim().split(/\ +/);
-          const volume = datasetSplit[0];
-          const unit = datasetSplit[1];
-          const referred = datasetSplit[2];
-          const ext = datasetSplit[3];
-          const used = datasetSplit[4];
-          const recfm = datasetSplit[5];
-          const lrecl = datasetSplit[6];
-          const blksz = datasetSplit[7];
-          const dsorg = datasetSplit[8];
-          // let dsname = highLevelQualifier + datasetSplit[9];
-          const dsname = datasetSplit[9];
-          datasets.push({
-            name: dsname,
-            toggled: false,
-            children: [],
-            attributes: {
-              volume,
-              unit,
-              referred,
-              ext,
-              used,
-              recfm,
-              lrecl,
-              blksz,
-              dsorg,
-              dsname
-            }
-          });
-        });
+        // parseDatasets throws on an unreadable listing and drops the header row.
+        datasets = parseDatasets(results);
         console.log(datasets);
       })
       .then(() => {
@@ -323,38 +269,10 @@ class JES {
       .then(() => this.ftp.list(''))
       .then((res) => {
         console.log(res);
-        res.shift(); //
-        return res.forEach(member => {
-          let memberSplit = member.trim().split(/\ +/);
-          let name = memberSplit[0] || '';
-          let vvmm = memberSplit[1] || '';
-          let created = memberSplit[2] || '';
-          let changed = memberSplit[3] || '';
-          let size = memberSplit[4] || '';
-          let init = memberSplit[5] || '';
-          let mod = memberSplit[6] || '';
-          let id = memberSplit[7] || '';
-          let dsorg = memberSplit[8] || '';
-          console.log({ name, vvmm, created, changed, size, init, mod, id, dsorg });
-          console.log(dsname);
-          let index = datasets.findIndex((dataset) => { return dataset.attributes.dsname == dsname });
-          console.log("index is: ", index);
-          datasets[index].children.push({
-            name: name,
-            attributes: {
-              name: name,
-              vvmm: vvmm,
-              created: created,
-              changed: changed,
-              size: size,
-              init: init,
-              mod: mod,
-              id: id,
-              dsorg: dsorg,
-              dsname: dsname
-            }
-          })
-        })
+        // parseMembers drops the header row and returns the child nodes for dsname.
+        const members = parseMembers(res, dsname);
+        const index = datasets.findIndex((dataset) => dataset.attributes.dsname == dsname);
+        datasets[index].children.push(...members);
       })
       .catch(err => console.log(err)) // "Error: No Members Found is returned if nothing is found"
       // MVS treats the home directory as the high-level-qualifier set to the z/OS userid
