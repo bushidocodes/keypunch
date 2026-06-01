@@ -1,0 +1,46 @@
+name: CI
+
+# Phase 0 verification harness, run on every push to master and every PR.
+# - harness-tests: the unit + integration (mock FTP/JES round-trip) suite on modern Node.
+# - legacy-build:  a regression guard that the 2017 webpack 1 / Babel 6 build still
+#                  produces bundles on Node 10, so toolchain migration breakage is caught.
+#   Both are replaced/expanded in Phase 5 (vitest+Playwright, modern build) — see MODERNIZATION.md.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  harness-tests:
+    name: Harness tests (vitest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: harness
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  legacy-build:
+    name: Legacy build (Node 10 / webpack 1)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '10.24.1'
+      # --ignore-scripts skips the electron-builder install-app-deps postinstall and the
+      # Electron binary download; webpack externalizes `electron`, so the build doesn't
+      # need the binary. This mirrors the documented local build flow.
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: npm run build
+      - name: Verify build artifacts
+        run: test -f app/main.js && test -f app/dist/bundle.js
