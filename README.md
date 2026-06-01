@@ -16,6 +16,34 @@ While this is a work in progress focused on delivering an initial MVP, this app 
 ## Screenshot
 TODO
 
+## Running on a modern machine (verified June 2026)
+
+This is a January-2017 stack (webpack 1, Babel 6, Electron 1.x, React 15) and it will **not**
+build under current Node: Node 17+ ships OpenSSL 3, which breaks webpack 1's hashing
+(`digital envelope routines::unsupported`), and Node 24 cannot run the Babel 6 toolchain at all.
+
+Use **Node 10** via [`fnm`](https://github.com/Schniz/fnm) or [`nvm`](https://github.com/nvm-sh/nvm).
+A `.node-version` pin (`10.24.1`) is included, so a version manager will auto-select it:
+
+```bash
+fnm use                                # reads .node-version -> 10.24.1
+npm install --ignore-scripts           # skip the electron-builder install-app-deps postinstall
+node node_modules/electron/install.js  # fetch the Electron binary explicitly
+npm run build                          # webpack 1 -> app/main.js + app/dist/bundle.js
+npm start                              # launch the app
+```
+
+Notes:
+* `electron@^1.4.15` resolves to **1.8.8**, which runs on Windows 11.
+* There are no native (node-gyp) dependencies, so `--ignore-scripts` is safe; it only avoids
+  the `install-app-deps` postinstall, and the explicit `electron/install.js` step replaces the
+  binary download that `--ignore-scripts` would otherwise skip.
+* The resolved dependency tree is pinned in `package-lock.json` for deterministic installs.
+* The app renders fully offline; **SUBMIT/LOAD require a live z/OS FTP endpoint** configured in
+  the Config pane.
+
+The original (2017) instructions below still describe the intended dev/HMR workflow.
+
 ## Install
 
 * **Note: requires a node version >= 6 and an npm version >= 3.**
