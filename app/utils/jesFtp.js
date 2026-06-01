@@ -66,7 +66,7 @@ class JES {
     console.log("Attempting to disconnect");
     this.ftp.end()
       .then((msg) => console.log(msg))
-      .catch(err => _errorLookup(err))
+      .catch(err => this._errorLookup(err))
     // .then(async () => {
     this.connectionStatus = this.ftp.getConnectionStatus();
     console.log("Connection Status: ", this.connectionStatus);
