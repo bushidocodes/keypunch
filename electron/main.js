@@ -296,7 +296,7 @@ function buildMenu() {
       submenu: [
         {
           label: 'View on GitHub',
-          click: () => shell.openExternal('https://github.com/spmcbride1201/keypunch-electron')
+          click: () => shell.openExternal('https://github.com/bushidocodes/keypunch-old')
         },
         {
           // The renderer's 'kill-ftp' handler calls window.keypunch.jes.disconnect()
