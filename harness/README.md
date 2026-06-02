@@ -16,9 +16,11 @@ Done for every later phase.
 | [`fixture.js`](fixture.js) | Deterministic seed data (jobs, datasets, members, spool output) + a fresh copy per `reseed()`. |
 | [`unit/jesParse.test.js`](unit/jesParse.test.js) | Unit tests for the pure parsers extracted to `app/utils/jesParse.js`. |
 | [`unit/resultsReducer.test.js`](unit/resultsReducer.test.js) | Unit tests for the `results` Redux reducer. |
-| [`integration/ftpRoundtrip.test.js`](integration/ftpRoundtrip.test.js) | Drives the mock server with the real `promise-ftp` client through Keypunch's command sequences and validates the round-trip through the parsers. **This is the automated e2e smoke at the protocol layer.** |
+| [`integration/ftpRoundtrip.test.js`](integration/ftpRoundtrip.test.js) | Drives the mock server with the real `promise-ftp` client through Keypunch's command sequences and validates the round-trip through the parsers. **The automated e2e smoke at the protocol layer.** |
+| [`e2e/electronE2e.test.js`](e2e/electronE2e.test.js) | **Playwright `_electron` GUI e2e** (enabled in Phase 1 now that Electron is modern). Launches the real *built* app against the mock server and drives the core journey through the UI: render → config → results queue → explorer datasets/members → open a member into the editor → submit. Also asserts the secure model at runtime (`contextIsolation:true`, `nodeIntegration:false`, preload bridge present, no `window.require`/`process`). |
+| [`playwright.config.js`](playwright.config.js) | Playwright config for the Electron e2e. |
 | [`start-mock.js`](start-mock.js) | Runs the mock server standalone (default port 2121) for manual GUI testing. |
-| [`launch-smoke.js`](launch-smoke.js) | Boots the built Electron app and asserts it starts without a fatal error. |
+| [`launch-smoke.js`](launch-smoke.js) | Boots the built Electron app (`out/main/main.js`) and asserts it starts without a fatal error. |
 
 ## Run the automated suite
 
@@ -26,21 +28,35 @@ Done for every later phase.
 cd harness
 npm install        # modern Node (>=18)
 npm test           # vitest: unit + integration  (16 tests)
+
+# GUI e2e — requires the app to be built first (repo root: npm run build):
+npm run e2e        # Playwright _electron: render + secure-model + core journey
+
+npm run smoke      # boot-only check of the built app
 ```
+
+### Known e2e limitation (Phase 4)
+
+The Results pane uses react-desktop@0.2.14's `MasterDetailsView`, which throws a
+React-15 reconciliation error (#120) when it **re-renders with a changed job list**
+under modern Chromium and corrupts the next route transition. This is a react-desktop
++ React-15 incompatibility unrelated to the build/runtime migration, deferred to the
+Phase 4 UI-library refresh. The e2e works around it by visiting Results last and
+asserting a submit's outcome against the authoritative mock-server state (the job
+really lands on the mainframe) rather than the un-rerenderable Results DOM.
 
 ## Manual GUI smoke checklist
 
-Full GUI automation (Playwright `_electron`) lands in **Phase 5** — Electron 1.8 predates
-Playwright's Electron driver. Until then, drive the real app by hand against the mock:
+For a hands-on pass, drive the real app against the mock:
 
-1. Build the app on Node 10 (see [root README](../README.md#running-on-a-modern-machine-verified-june-2026)).
+1. Build the app: from the repo root, `npm run build`.
 2. Start the mock server: `cd harness && npm run mock` (prints the host/port to use).
 3. Launch the app: from the repo root, `npm start` (or `harness && npm run smoke` for a boot-only check).
 4. Walk the core journey (reseed = restart `npm run mock` for a clean queue):
    - [ ] **App launches**, main window visible, no errors in the dev console.
    - [ ] **Editor**: type some JCL/source; switch panes and back — content persists.
-   - [ ] **Config**: enter `host=127.0.0.1  port=2121  user=IBMUSER  password=anything`; connect → "connected" indicator lights.
-   - [ ] **Submit** ("easy button"): submit a job → it appears in Results.
+   - [ ] **Config**: enter `host=127.0.0.1  port=2121  user=IBMUSER  password=anything`.
    - [ ] **Results**: the seeded queue (`JOB00045`, `JOB00046`) renders; retrieve `JOB00045`'s output → spool output renders.
+   - [ ] **Submit** ("LOAD" easy button): submit a job → it lands on the mock (`JOB00100`).
    - [ ] **Explorer**: `IBMUSER.SOURCE` / `IBMUSER.JCL` render as a tree; open member `HELLO` → its COBOL source loads into the editor.
-   - [ ] **Disconnect** → all status indicators clear.
+   - [ ] **Disconnect** → status indicators clear.

@@ -7,8 +7,6 @@ import { store } from '../index';
 import { testIndicators } from '../utils/nativeDialogs';
 import jes from '../utils/jesFtp';
 
-const { dialog } = require('electron').remote;
-
 function StatusBar(props) {
   return (
     <View
@@ -209,23 +207,12 @@ function mapDispatchToProps(dispatch) {
       dispatch(jes.disconnect);
     },
 
-    submitJob: (evt) => {
+    submitJob: async (evt) => {
       evt.preventDefault();
-      dialog.showMessageBox({
-        type: 'question',
-        buttons: ['Cancel', 'Submit'],
-        defaultId: 0,
-        title: 'Confirm Job Submission',
-        message: 'Are you sure that you want to submit your batch job?',
-        noLink: true
-      },
-        (response) => {
-          console.log('Button chosed was:', response);
-          if (response === 1) {
-            console.log('Job Sumbission was confirmed');
-            jes.submitJob(Buffer.from(store.getState().editor.editorContent));
-          }
-        });
+      const confirmed = await window.keypunch.confirmSubmit();
+      if (confirmed) {
+        jes.submitJob(store.getState().editor.editorContent);
+      }
     }
   };
 }

@@ -1,13 +1,13 @@
 // Minimal automated *boot* smoke for the built app: launch the real Electron
-// binary against the built bundle and assert it starts and stays up (i.e. the
-// main process and renderer bundle load without a fatal error), then terminate.
+// binary against the electron-vite build output (out/main/main.js, referenced
+// by the root package.json `main`) and assert it starts and stays up — i.e. the
+// main process, preload, and renderer bundle load without a fatal error — then
+// terminate.
 //
-// This is intentionally shallow: Electron 1.8 predates Playwright's `_electron`
-// driver, so full GUI journey automation lands in Phase 5 once Electron is
-// modern. Until then, the deep coverage is the protocol-level FTP round-trip in
-// integration/ftpRoundtrip.test.js, plus the manual checklist in SMOKE.md.
+// Deeper GUI-journey coverage lives in the Playwright e2e (electronE2e.test.js),
+// which drives the real UI against the mock JES server.
 //
-//   npm run smoke      # in harness/  (requires: Node-10 build done + a display)
+//   npm run smoke      # in harness/  (requires: `npm run build` done + a display)
 
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
@@ -15,20 +15,20 @@ import { existsSync } from 'fs';
 
 const electronExe = fileURLToPath(new URL('../node_modules/electron/dist/electron.exe', import.meta.url));
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
-const builtMain = fileURLToPath(new URL('../app/main.js', import.meta.url));
+const builtMain = fileURLToPath(new URL('../out/main/main.js', import.meta.url));
 const UPTIME_MS = Number(process.env.SMOKE_UPTIME_MS || 8000);
 
 if (!existsSync(electronExe)) {
-  console.error('FAIL: Electron binary not found at', electronExe, '\n  Run the Node-10 install first (see README).');
+  console.error('FAIL: Electron binary not found at', electronExe, '\n  Run `npm install` at the repo root first.');
   process.exit(1);
 }
 if (!existsSync(builtMain)) {
-  console.error('FAIL: app/main.js not found — run the build first (see README).');
+  console.error('FAIL: out/main/main.js not found — run `npm run build` first.');
   process.exit(1);
 }
 
 console.log('Boot smoke: launching built app via', electronExe);
-const child = spawn(electronExe, ['./app/'], {
+const child = spawn(electronExe, ['.'], {
   cwd: repoRoot,
   env: { ...process.env, NODE_ENV: 'production' },
   stdio: 'inherit'

@@ -40,10 +40,10 @@ export default function configureStore(initialState) {
 // export default function configureStore(initialState?: counterStateType) {
   const store = createStore(rootReducer, initialState, enhancer);
 
-  if (module.hot) {
-    module.hot.accept('../reducers', () =>
-      store.replaceReducer(require('../reducers')) // eslint-disable-line global-require
-    );
+  if (import.meta.hot) {
+    import.meta.hot.accept('../reducers', (mod) => {
+      if (mod) store.replaceReducer(mod.default);
+    });
   }
 
   return store;
