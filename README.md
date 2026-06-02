@@ -13,9 +13,9 @@ While this is a work in progress focused on delivering an initial MVP, this app 
 * Gamification and Badges to encourage learning without compromising core business data.
 
 ## Screenshot
-TODO
+![Keypunch — Ace editor, icon sidebar nav, and the JES status bar](./resources/images/screenshot.png)
 
-## Toolchain (modernized — Phase 1)
+## Toolchain (modernized)
 
 Keypunch builds with **electron-vite** (Vite 7) on a current Node LTS, runs on **Electron 42**,
 and uses the secure renderer model: `contextIsolation: true`, `nodeIntegration: false`, and a
@@ -44,8 +44,10 @@ Notes:
 * The app renders fully offline; **SUBMIT/LOAD require a z/OS FTP endpoint** configured in the
   Config pane. The [verification harness](harness/) ships a mock z/OS FTP/JES server for testing
   (`cd harness && npm run mock`).
-* React stays at **15** for now (react-desktop pins it); the React/router/Redux refresh is
-  Phase 4. See [MODERNIZATION.md](MODERNIZATION.md).
+* UI stack is **React 18 + Redux Toolkit + React Router 6** with plain-CSS components (the
+  abandoned react-desktop was removed). TypeScript is being adopted incrementally
+  (`allowJs`, so `.js` and `.ts` coexist). See [MODERNIZATION.md](MODERNIZATION.md) — all
+  modernization phases are complete.
 
 ## Running / troubleshooting
 
@@ -112,11 +114,10 @@ CI (`.github/workflows/ci.yml`) runs all of these on every push/PR: **lint**, **
 **harness tests**, the **electron-vite build**, and the **e2e under xvfb**.
 
 ## Built with
-* [electron-vite](https://electron-vite.org/) + [Vite](https://vite.dev/)
+* [electron-vite](https://electron-vite.org/) + [Vite](https://vite.dev/) + [TypeScript](https://www.typescriptlang.org/)
 * [Electron](https://www.electronjs.org/)
-* [React](https://react.dev/)
-* [Redux](https://redux.js.org/) + [React Router](https://reactrouter.com/)
-* [React Desktop](https://github.com/gabrielbull/react-desktop)
+* [React](https://react.dev/) 18
+* [Redux Toolkit](https://redux-toolkit.js.org/) + [React Router](https://reactrouter.com/)
 * [Ace](https://ace.c9.io/) via [react-ace](https://github.com/securingsincity/react-ace)
 * [electron-builder](https://www.electron.build/)
 
