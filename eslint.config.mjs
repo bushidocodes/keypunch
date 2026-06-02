@@ -10,6 +10,7 @@
 import js from '@eslint/js';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
+import tseslint from 'typescript-eslint';
 import globals from 'globals';
 
 export default [
@@ -25,6 +26,29 @@ export default [
 
   // Base recommended rules for every linted file.
   js.configs.recommended,
+
+  // --- TypeScript: the Phase 6 conversions (app/utils/jesParse.ts,
+  // electron/{main,preload}.ts + the .d.ts contracts). typescript-eslint's
+  // recommended set, applied only to .ts/.tsx so the legacy .js stays on the
+  // plain-JS rules below. Lightweight (no type-aware linting / project service)
+  // to keep `npm run lint` fast and config simple.
+  ...tseslint.configs.recommended.map((config) => ({
+    ...config,
+    files: ['app/**/*.{ts,tsx}', 'electron/**/*.{ts,tsx}']
+  })),
+  {
+    files: ['app/**/*.{ts,tsx}', 'electron/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node
+      }
+    },
+    rules: {
+      // `import.meta.url` etc. are fine; the base no-undef is handled by TS.
+      'no-undef': 'off'
+    }
+  },
 
   // --- Renderer: app/**/*.js (React 18, JSX in .js, automatic runtime) -------
   {

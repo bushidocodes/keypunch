@@ -9,6 +9,61 @@
 // listing is a header that must be dropped. The JES job queue has no header but
 // emits informational strings (e.g. an empty-queue message) that are not jobs.
 
+// A single job parsed out of the JES held-queue listing.
+export interface Job {
+  owner: string;
+  status: string;
+  // The "N Spool Files" count, or null when the line carries no spool info.
+  numberOfSpoolFiles: string | null;
+  jobID: string;
+  fullString: string;
+}
+
+// Jobs keyed by job ID, as returned by parseJobs.
+export type JobMap = Record<string, Job>;
+
+// Column attributes of a dataset row.
+export interface DatasetAttributes {
+  volume: string;
+  unit: string;
+  referred: string;
+  ext: string;
+  used: string;
+  recfm: string;
+  lrecl: string;
+  blksz: string;
+  dsorg: string;
+  dsname: string;
+}
+
+// A dataset tree node (shaped for react-treebeard).
+export interface Dataset {
+  name: string;
+  toggled: boolean;
+  children: Member[];
+  attributes: DatasetAttributes;
+}
+
+// Column attributes of a member row, tagged with its owning dataset.
+export interface MemberAttributes {
+  name: string;
+  vvmm: string;
+  created: string;
+  changed: string;
+  size: string;
+  init: string;
+  mod: string;
+  id: string;
+  dsorg: string;
+  dsname: string;
+}
+
+// A member child-node belonging to a dataset.
+export interface Member {
+  name: string;
+  attributes: MemberAttributes;
+}
+
 // Informational string the mainframe returns when the held queue is empty.
 export const NO_JOBS_MESSAGE = 'No jobs found on Held queue';
 
@@ -16,14 +71,14 @@ export const NO_JOBS_MESSAGE = 'No jobs found on Held queue';
 // job ID. Throws when the queue could not be read at all (mirrors the original
 // behaviour, which treated an empty array as an error). Returns {} for the
 // known empty-queue informational message.
-export function parseJobs(results) {
+export function parseJobs(results: string[] | null | undefined): JobMap {
   if (!results || results.length === 0) {
     throw new Error('Unable to retrieve jobs from the mainframe JES Queue.');
   }
   if (results[0] === NO_JOBS_MESSAGE) {
     return {};
   }
-  const jobs = {};
+  const jobs: JobMap = {};
   results.forEach((job) => {
     const jobSplit = job.trim().split(/ +/);
     const jobID = jobSplit[1];
@@ -42,7 +97,7 @@ export function parseJobs(results) {
 // qualifier into an array of dataset nodes (tree-ready for react-treebeard).
 // The first row is a column header and is discarded. Throws when nothing came
 // back at all (mirrors the original).
-export function parseDatasets(results) {
+export function parseDatasets(results: string[] | null | undefined): Dataset[] {
   if (!results || results.length === 0) {
     throw new Error('Unable to list datasets.');
   }
@@ -62,7 +117,7 @@ export function parseDatasets(results) {
 // Parse the output of `LIST ''` inside a partitioned dataset into an array of
 // member child-nodes belonging to `dsname`. The first row is a header and is
 // discarded. Missing columns default to '' exactly as the original did.
-export function parseMembers(results, dsname) {
+export function parseMembers(results: string[] | null | undefined, dsname: string): Member[] {
   const rows = (results || []).slice(1); // drop the header row
   return rows.map((member) => {
     const memberSplit = member.trim().split(/ +/);

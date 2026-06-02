@@ -96,6 +96,7 @@ $ npm run package -- --[option]
 
 ```bash
 npm run lint        # ESLint (flat config) over app/ + electron/ + harness/
+npm run typecheck   # tsc --noEmit (TypeScript; .js still allowed via allowJs)
 ```
 
 The [verification harness](harness/) (separate workspace, runs on modern Node) holds the
@@ -107,8 +108,8 @@ npm test           # vitest: jesParse + reducer unit tests, mock FTP/JES round-t
 npm run e2e        # Playwright _electron GUI journey against the built app + mock server
 ```
 
-CI (`.github/workflows/ci.yml`) runs all of these on every push/PR: **lint**, **harness
-tests**, the **electron-vite build**, and the **e2e under xvfb**.
+CI (`.github/workflows/ci.yml`) runs all of these on every push/PR: **lint**, **typecheck**,
+**harness tests**, the **electron-vite build**, and the **e2e under xvfb**.
 
 ## Built with
 * [electron-vite](https://electron-vite.org/) + [Vite](https://vite.dev/)

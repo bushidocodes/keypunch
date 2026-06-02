@@ -4,11 +4,12 @@
 // exposes a small, explicit `window.keypunch` API via contextBridge; the
 // renderer has no direct access to Node, `fs`, `promise-ftp`, `dialog`, or
 // `ipcRenderer`. Every method here is a thin wrapper over an ipcMain.handle
-// channel in main.js.
+// channel in main.ts.
 
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+import type { KeypunchApi, MenuChannel } from '../app/keypunch';
 
-contextBridge.exposeInMainWorld('keypunch', {
+const api: KeypunchApi = {
   // --- file dialogs + fs (run in main) ---
   // Returns { path, content } or null if the user cancelled.
   openFile: () => ipcRenderer.invoke('file:open'),
@@ -21,7 +22,7 @@ contextBridge.exposeInMainWorld('keypunch', {
   confirm: (opts) => ipcRenderer.invoke('dialog:confirm', opts),
 
   // --- JES / FTP (all I/O runs in main; raw results come back to be parsed
-  //     by the renderer's jesParse.js) ---
+  //     by the renderer's jesParse.ts) ---
   jes: {
     connect: (config) => ipcRenderer.invoke('jes:connect', config),
     disconnect: () => ipcRenderer.invoke('jes:disconnect'),
@@ -38,8 +39,10 @@ contextBridge.exposeInMainWorld('keypunch', {
   // --- main -> renderer menu events ---
   // channel is one of: file:new, file:open, file:save, file:saveAs, kill-ftp
   onMenu: (cb) => {
-    const listener = (_evt, channel) => cb(channel);
+    const listener = (_evt: IpcRendererEvent, channel: MenuChannel) => cb(channel);
     ipcRenderer.on('menu', listener);
     return () => ipcRenderer.removeListener('menu', listener);
   }
-});
+};
+
+contextBridge.exposeInMainWorld('keypunch', api);

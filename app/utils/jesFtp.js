@@ -7,7 +7,7 @@
 //   1. dispatches the connecting/submitting/retrieving flags,
 //   2. calls the corresponding preload method (which does the full FTP chain
 //      in main and returns RAW results, or throws),
-//   3. parses the raw results with the existing jesParse.js,
+//   3. parses the raw results with the existing jesParse.ts,
 //   4. dispatches the refresh/load actions.
 //
 // Parsing stays here in the renderer so the harness unit tests for jesParse
