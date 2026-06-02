@@ -48,6 +48,28 @@ Notes:
 * React stays at **15** for now (react-desktop pins it); the React/router/Redux refresh is
   Phase 4. See [MODERNIZATION.md](MODERNIZATION.md).
 
+## Running / troubleshooting
+
+**Always launch via the npm scripts (`npm run dev` or `npm start`) — don't run the `electron`
+binary directly.** electron-vite compiles the main/preload/renderer bundles and wires up the
+app paths for you. The build output (`out/`) is gitignored, so a bare `electron .` has no
+`main` to load and will fail.
+
+Common errors from invoking Electron by hand:
+
+| Dialog | Cause | Fix |
+|--------|-------|-----|
+| `Unable to find Electron app at …` / `Cannot find module '<repo path>'` | `electron .` with no build present (`out/main/main.js` missing) | Use `npm run dev`, or `npm start` (which builds, then previews) |
+| `Cannot find module '…console.log(process.versions.chrome)'` (or any expression) | Electron has **no** `-e`/`--eval` flag like Node, so the string is treated as the app path | Don't eval through Electron — see *Checking versions* below |
+
+**Checking versions**
+* Electron: `npx electron --version` → `v42.x` (Electron 42 ships Chromium ~136 / Node ~22).
+* Chromium, from the running app: **View → Toggle Developer Tools**, then run
+  `navigator.userAgent` in the console (shows `Chrome/136…`).
+* `process` is intentionally **absent from the renderer** — that's `contextIsolation` (the
+  secure model) working as designed. Renderer code reaches Node/main only through the
+  `window.keypunch` preload bridge, never `process` or `require`.
+
 ## Packaging
 
 To package apps for the local platform:
