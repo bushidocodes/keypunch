@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "package": "electron-vite build && electron-builder --publish never",
+    "package-mac": "electron-vite build && electron-builder --mac",
     "package-win": "electron-vite build && electron-builder --win --x64",
     "package-linux": "electron-vite build && electron-builder --linux",
     "package-all": "electron-vite build && electron-builder -mwl"
@@ -39,19 +40,24 @@
         }
       ]
     },
+    "directories": {
+      "buildResources": "resources",
+      "output": "release"
+    },
+    "mac": {
+      "icon": "resources/icons/1024x1024.png"
+    },
     "win": {
+      "icon": "resources/icon.ico",
       "target": "nsis"
     },
     "linux": {
+      "icon": "resources/icons",
       "target": [
         "deb",
         "AppImage"
       ]
     }
-  },
-  "directories": {
-    "buildResources": "resources",
-    "output": "release"
   },
   "repository": {
     "type": "git",

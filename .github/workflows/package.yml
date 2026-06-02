@@ -1,0 +1,104 @@
+name: Package
+
+# Build branded installers on every version tag or on demand.
+# Each platform job runs on its native runner so electron-builder can
+# produce native artifacts (NSIS, DMG, AppImage/deb).
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  package:
+    name: Package (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            script: package-linux
+          - os: windows-latest
+            script: package-win
+          - os: macos-latest
+            script: package-mac
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build and package
+        run: npm run ${{ matrix.script }}
+
+      - name: List release artifacts
+        shell: bash
+        run: ls -lh release/
+
+      # ── Linux smoke-launch ────────────────────────────────────────────────
+      - name: Install AppImage runtime dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb libgtk-3-0 libnss3 libasound2t64 libfuse2
+
+      - name: Smoke-launch AppImage
+        if: runner.os == 'Linux'
+        run: |
+          APPIMAGE=$(ls release/*.AppImage | head -1)
+          echo "Launching: $APPIMAGE"
+          chmod +x "$APPIMAGE"
+          # Run under xvfb; timeout after 10 s. Exit 124 = timeout = app stayed alive = pass.
+          xvfb-run -a timeout 10 "$APPIMAGE" --no-sandbox
+          CODE=$?
+          [ $CODE -eq 0 ] || [ $CODE -eq 124 ] || (echo "AppImage crashed with exit $CODE" && exit 1)
+
+      # ── macOS smoke-launch ────────────────────────────────────────────────
+      - name: Smoke-launch DMG
+        if: runner.os == 'macOS'
+        run: |
+          DMG=$(ls release/*.dmg | head -1)
+          echo "Attaching: $DMG"
+          hdiutil attach "$DMG" -nobrowse -quiet
+          # Verify the branded app bundle and executable exist inside the DMG.
+          APP=$(find /Volumes -maxdepth 2 -name "Keypunch.app" 2>/dev/null | head -1)
+          echo "App bundle: $APP"
+          test -n "$APP" || (echo "Keypunch.app not found in DMG" && exit 1)
+          test -f "$APP/Contents/MacOS/Keypunch" || (echo "Keypunch binary missing" && exit 1)
+          # Launch briefly; timeout exit 124 = app ran without immediate crash.
+          timeout 10 "$APP/Contents/MacOS/Keypunch" --no-sandbox || [ $? -eq 124 ]
+          hdiutil detach "$(dirname "$APP")" -quiet || true
+
+      # ── Windows smoke-launch ──────────────────────────────────────────────
+      - name: Smoke-launch NSIS installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem release -Filter "*.exe" | Select-Object -First 1
+          if (-not $exe) { throw "No installer found in release/" }
+          Write-Host "Installer: $($exe.FullName)  ($([Math]::Round($exe.Length/1MB,1)) MB)"
+          # Validate PE MZ header.
+          $bytes = [IO.File]::ReadAllBytes($exe.FullName)
+          if ($bytes[0] -ne 77 -or $bytes[1] -ne 90) { throw "Not a valid PE executable" }
+          Write-Host "PE header OK"
+
+      # ── Upload artifacts ──────────────────────────────────────────────────
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: keypunch-${{ runner.os }}
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.AppImage
+            release/*.deb
+          if-no-files-found: error
