@@ -46,8 +46,8 @@ Notes:
   (`cd harness && npm run mock`).
 * UI stack is **React 18 + Redux Toolkit + React Router 6** with plain-CSS components (the
   abandoned react-desktop was removed). TypeScript is being adopted incrementally
-  (`allowJs`, so `.js` and `.ts` coexist). See [MODERNIZATION.md](MODERNIZATION.md) — all
-  modernization phases are complete.
+  (`allowJs`, so `.js` and `.ts` coexist). All modernization phases are complete — see the
+  [modernization epic](https://github.com/bushidocodes/keypunch-old/issues/20).
 
 ## Running / troubleshooting
 
@@ -121,7 +121,7 @@ CI (`.github/workflows/ci.yml`) runs all of these on every push/PR: **lint**, **
 * [Ace](https://ace.c9.io/) via [react-ace](https://github.com/securingsincity/react-ace)
 * [electron-builder](https://www.electron.build/)
 
-> Originally generated from [Electron React Boilerplate](https://github.com/chentsulin/electron-react-boilerplate); the build/runtime stack has since been modernized (see [MODERNIZATION.md](MODERNIZATION.md)).
+> Originally generated from [Electron React Boilerplate](https://github.com/chentsulin/electron-react-boilerplate); the build/runtime stack has since been fully modernized (see the [modernization epic](https://github.com/bushidocodes/keypunch-old/issues/20)).
 
 ## Useful Resources
 * http://www.ibm.com/support/knowledgecenter/SSLTBW_2.1.0/com.ibm.zos.v2r1.halu001/intfjesexample.htm
