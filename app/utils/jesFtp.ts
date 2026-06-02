@@ -153,23 +153,19 @@ class JES {
     store.dispatch(setIsRetrieving(true));
     store.dispatch(setIsConnecting(true));
     try {
-      const config = getConfig();
-      const rows = await bridge().listDatasets(config);
+      // Use the compound call so the full dataset + member listing is a single
+      // atomic operation in the main-process FTP queue.  A concurrent
+      // pollJobStatus can no longer interleave its FTP commands between the
+      // individual member-listing calls (fixes issue #2).
+      const { datasetRows, memberRowsByDs } = await bridge().listDatasetsWithMembers(getConfig());
       store.dispatch(setIsConnecting(false));
       store.dispatch(setIsConnected(true));
       // parseDatasets throws on an unreadable listing and drops the header row.
-      const datasets = parseDatasets(rows);
-      // Populate the members of each dataset, exactly as the old flow did.
+      const datasets = parseDatasets(datasetRows);
       for (const dataset of datasets) {
         const dsname = dataset.attributes.dsname;
-        try {
-          const memberRows = await bridge().listMembers(config, dsname);
-          const members = parseMembers(memberRows, dsname);
-          dataset.children.push(...members);
-        } catch (err) {
-          // An empty / unreadable PDS just yields no members.
-          console.log(err);
-        }
+        const memberRows = memberRowsByDs[dsname] ?? [];
+        dataset.children.push(...parseMembers(memberRows, dsname));
       }
       store.dispatch(refreshDatasets(datasets));
       store.dispatch(setIsRetrieved(true));
