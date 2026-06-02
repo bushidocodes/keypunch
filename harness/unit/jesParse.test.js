@@ -4,7 +4,7 @@ import {
   parseDatasets,
   parseMembers,
   NO_JOBS_MESSAGE
-} from '../../app/utils/jesParse.js';
+} from '../../app/utils/jesParse';
 
 describe('parseJobs', () => {
   it('parses a JES held-queue listing into a map keyed by job ID', () => {

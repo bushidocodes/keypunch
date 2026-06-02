@@ -4,30 +4,47 @@
 // menu, all filesystem access (open/save dialogs + fs), and all FTP/JES traffic
 // to the mainframe (via `promise-ftp`). The renderer is locked down
 // (contextIsolation:true, nodeIntegration:false) and reaches main only through
-// the `window.keypunch` API defined in preload.js over IPC.
+// the `window.keypunch` API defined in preload.ts over IPC.
 
-import { app, BrowserWindow, Menu, shell, dialog, ipcMain } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  shell,
+  dialog,
+  ipcMain,
+  type IpcMainInvokeEvent,
+  type MenuItemConstructorOptions
+} from 'electron';
 import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import PromiseFtp from 'promise-ftp';
+import type {
+  FtpConfig,
+  ConfirmOptions,
+  OpenFileResult,
+  MenuChannel
+} from '../app/keypunch';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-let mainWindow = null;
+let mainWindow: BrowserWindow | null = null;
 
 // --------------------------------------------------------------------------
 // JES — all FTP/JES I/O. Each high-level op runs the FULL command chain the
 // renderer used to run inline, and returns RAW results (LIST -> string[],
-// RETR -> string) or throws. Parsing stays in the renderer (jesParse.js) so
+// RETR -> string) or throws. Parsing stays in the renderer (jesParse.ts) so
 // the harness unit/integration tests remain valid.
 // --------------------------------------------------------------------------
 class JES {
+  private ftp: PromiseFtp;
+
   constructor() {
     this.ftp = new PromiseFtp();
   }
 
-  async connect(config) {
+  async connect(config: FtpConfig): Promise<string> {
     if (this.ftp.getConnectionStatus() === 'connected') {
       return 'Already connected';
     }
@@ -40,7 +57,7 @@ class JES {
     return 'connected';
   }
 
-  async disconnect() {
+  async disconnect(): Promise<string> {
     let status = this.ftp.getConnectionStatus();
     if (status === 'not yet connected' || status === 'disconnected') {
       return 'disconnected';
@@ -66,20 +83,20 @@ class JES {
     return 'disconnected';
   }
 
-  async setEncoding(type) {
+  async setEncoding(type: string): Promise<unknown> {
     if (type === 'ascii') {
       return this.ftp.ascii();
     }
   }
 
-  async setFiletype(filetype) {
+  async setFiletype(filetype: string): Promise<unknown> {
     if (filetype === 'jes' || filetype === 'seq') {
       return this.ftp.site('FILETYPE=' + filetype);
     }
   }
 
   // Returns the raw LIST lines for the JES held queue.
-  async pollJobs(config) {
+  async pollJobs(config: FtpConfig): Promise<string[]> {
     await this.connect(config);
     await this.setEncoding('ascii');
     await this.setFiletype('jes');
@@ -87,7 +104,7 @@ class JES {
   }
 
   // STOR a job. `contentString` is the editor contents.
-  async submitJob(config, contentString) {
+  async submitJob(config: FtpConfig, contentString: string): Promise<string> {
     await this.connect(config);
     await this.setEncoding('ascii');
     await this.setFiletype('jes');
@@ -96,7 +113,7 @@ class JES {
   }
 
   // Retrieve a job's spool output (RETR <jobID>.x) as a string.
-  async retrieveJob(config, jobID) {
+  async retrieveJob(config: FtpConfig, jobID: string): Promise<string> {
     await this.connect(config);
     await this.setEncoding('ascii');
     await this.setFiletype('jes');
@@ -104,7 +121,7 @@ class JES {
     return this._streamToString(stream);
   }
 
-  async deleteJob(config, jobID) {
+  async deleteJob(config: FtpConfig, jobID: string): Promise<string> {
     await this.connect(config);
     await this.setEncoding('ascii');
     await this.setFiletype('jes');
@@ -113,7 +130,7 @@ class JES {
   }
 
   // Returns raw LIST lines for the datasets at the home qualifier.
-  async listDatasets(config) {
+  async listDatasets(config: FtpConfig): Promise<string[]> {
     await this.connect(config);
     await this.setEncoding('ascii');
     await this.setFiletype('seq');
@@ -121,7 +138,7 @@ class JES {
   }
 
   // Returns raw LIST lines for the members of `dsname`.
-  async listMembers(config, dsname) {
+  async listMembers(config: FtpConfig, dsname: string): Promise<string[]> {
     await this.connect(config);
     await this.setEncoding('ascii');
     await this.setFiletype('seq');
@@ -140,7 +157,7 @@ class JES {
   }
 
   // Retrieve the contents of a member as a string.
-  async retrieveMember(config, dsname, member) {
+  async retrieveMember(config: FtpConfig, dsname: string, member: string): Promise<string> {
     await this.connect(config);
     await this.setEncoding('ascii');
     await this.setFiletype('seq');
@@ -156,10 +173,10 @@ class JES {
 
   // --- private helpers ----------------------------------------------------
 
-  _streamToString(stream) {
+  private _streamToString(stream: NodeJS.ReadableStream): Promise<string> {
     return new Promise((resolve, reject) => {
       let data = '';
-      stream.on('data', (chunk) => { data += chunk.toString(); });
+      stream.on('data', (chunk: Buffer | string) => { data += chunk.toString(); });
       stream.on('end', () => resolve(data));
       stream.on('error', reject);
       // CRITICAL: node-ftp hands back a PAUSED data socket. On modern Node,
@@ -170,7 +187,7 @@ class JES {
     });
   }
 
-  _sleep(ms) {
+  private _sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
@@ -180,10 +197,10 @@ const jes = new JES();
 // --------------------------------------------------------------------------
 // IPC handlers
 // --------------------------------------------------------------------------
-function registerIpc() {
+function registerIpc(): void {
   // --- file dialogs + fs ---
-  ipcMain.handle('file:open', async () => {
-    const result = await dialog.showOpenDialog(mainWindow, {
+  ipcMain.handle('file:open', async (): Promise<OpenFileResult | null> => {
+    const result = await dialog.showOpenDialog(mainWindow!, {
       properties: ['openFile', 'createDirectory', 'showHiddenFiles']
     });
     if (result.canceled || !result.filePaths.length) return null;
@@ -192,19 +209,27 @@ function registerIpc() {
     return { path: filePath, content };
   });
 
-  ipcMain.handle('file:save', async (_evt, content, currentPath, overwrite) => {
-    if (overwrite && currentPath) {
-      await writeFile(currentPath, content);
-      return currentPath;
+  ipcMain.handle(
+    'file:save',
+    async (
+      _evt: IpcMainInvokeEvent,
+      content: string,
+      currentPath: string | null,
+      overwrite: boolean
+    ): Promise<string | null> => {
+      if (overwrite && currentPath) {
+        await writeFile(currentPath, content);
+        return currentPath;
+      }
+      const result = await dialog.showSaveDialog(mainWindow!, {});
+      if (result.canceled || !result.filePath) return null;
+      await writeFile(result.filePath, content);
+      return result.filePath;
     }
-    const result = await dialog.showSaveDialog(mainWindow, {});
-    if (result.canceled || !result.filePath) return null;
-    await writeFile(result.filePath, content);
-    return result.filePath;
-  });
+  );
 
-  ipcMain.handle('dialog:confirmSubmit', async () => {
-    const result = await dialog.showMessageBox(mainWindow, {
+  ipcMain.handle('dialog:confirmSubmit', async (): Promise<boolean> => {
+    const result = await dialog.showMessageBox(mainWindow!, {
       type: 'question',
       buttons: ['Cancel', 'Submit'],
       defaultId: 0,
@@ -215,41 +240,52 @@ function registerIpc() {
     return result.response === 1;
   });
 
-  ipcMain.handle('dialog:confirm', async (_evt, opts) => {
-    const result = await dialog.showMessageBox(mainWindow, {
-      type: 'question',
-      buttons: opts.buttons || ['Cancel', 'OK'],
-      defaultId: 0,
-      title: opts.title || 'Confirm',
-      message: opts.message || '',
-      noLink: true
-    });
-    return result.response === 1;
-  });
+  ipcMain.handle(
+    'dialog:confirm',
+    async (_evt: IpcMainInvokeEvent, opts: ConfirmOptions): Promise<boolean> => {
+      const result = await dialog.showMessageBox(mainWindow!, {
+        type: 'question',
+        buttons: opts.buttons || ['Cancel', 'OK'],
+        defaultId: 0,
+        title: opts.title || 'Confirm',
+        message: opts.message || '',
+        noLink: true
+      });
+      return result.response === 1;
+    }
+  );
 
   // --- JES / FTP ---
-  ipcMain.handle('jes:connect', (_evt, config) => jes.connect(config));
+  ipcMain.handle('jes:connect', (_evt: IpcMainInvokeEvent, config: FtpConfig) => jes.connect(config));
   ipcMain.handle('jes:disconnect', () => jes.disconnect());
-  ipcMain.handle('jes:pollJobs', (_evt, config) => jes.pollJobs(config));
-  ipcMain.handle('jes:submitJob', (_evt, config, content) => jes.submitJob(config, content));
-  ipcMain.handle('jes:retrieveJob', (_evt, config, jobID) => jes.retrieveJob(config, jobID));
-  ipcMain.handle('jes:deleteJob', (_evt, config, jobID) => jes.deleteJob(config, jobID));
-  ipcMain.handle('jes:listDatasets', (_evt, config) => jes.listDatasets(config));
-  ipcMain.handle('jes:listMembers', (_evt, config, dsname) => jes.listMembers(config, dsname));
-  ipcMain.handle('jes:retrieveMember', (_evt, config, dsname, member) =>
-    jes.retrieveMember(config, dsname, member));
+  ipcMain.handle('jes:pollJobs', (_evt: IpcMainInvokeEvent, config: FtpConfig) => jes.pollJobs(config));
+  ipcMain.handle('jes:submitJob', (_evt: IpcMainInvokeEvent, config: FtpConfig, content: string) =>
+    jes.submitJob(config, content));
+  ipcMain.handle('jes:retrieveJob', (_evt: IpcMainInvokeEvent, config: FtpConfig, jobID: string) =>
+    jes.retrieveJob(config, jobID));
+  ipcMain.handle('jes:deleteJob', (_evt: IpcMainInvokeEvent, config: FtpConfig, jobID: string) =>
+    jes.deleteJob(config, jobID));
+  ipcMain.handle('jes:listDatasets', (_evt: IpcMainInvokeEvent, config: FtpConfig) =>
+    jes.listDatasets(config));
+  ipcMain.handle('jes:listMembers', (_evt: IpcMainInvokeEvent, config: FtpConfig, dsname: string) =>
+    jes.listMembers(config, dsname));
+  ipcMain.handle(
+    'jes:retrieveMember',
+    (_evt: IpcMainInvokeEvent, config: FtpConfig, dsname: string, member: string) =>
+      jes.retrieveMember(config, dsname, member)
+  );
 }
 
 // --------------------------------------------------------------------------
 // Native application menu. Menu clicks that drive editor actions send IPC to
 // the renderer ('menu' channel); the Kill FTP item calls main directly.
 // --------------------------------------------------------------------------
-function sendMenu(channel) {
+function sendMenu(channel: MenuChannel): void {
   if (mainWindow) mainWindow.webContents.send('menu', channel);
 }
 
-function buildMenu() {
-  const template = [
+function buildMenu(): void {
+  const template: MenuItemConstructorOptions[] = [
     {
       label: 'File',
       submenu: [
@@ -324,7 +360,7 @@ function buildMenu() {
         { role: 'quit' }
       ]
     });
-    template[1].submenu.push(
+    (template[1].submenu as MenuItemConstructorOptions[]).push(
       { type: 'separator' },
       {
         label: 'Speech',
@@ -339,7 +375,7 @@ function buildMenu() {
 // --------------------------------------------------------------------------
 // Window / app lifecycle
 // --------------------------------------------------------------------------
-function createWindow() {
+function createWindow(): void {
   mainWindow = new BrowserWindow({
     title: 'Keypunch',
     show: false,
@@ -362,8 +398,8 @@ function createWindow() {
   }
 
   mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow.show();
-    mainWindow.focus();
+    mainWindow!.show();
+    mainWindow!.focus();
   });
 
   mainWindow.on('closed', () => { mainWindow = null; });

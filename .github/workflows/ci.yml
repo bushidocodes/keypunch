@@ -2,6 +2,7 @@ name: CI
 
 # Run on every push to master and every PR.
 # - lint:          ESLint flat config over app/ + electron/ + harness/.
+# - typecheck:     tsc --noEmit (TypeScript, Phase 6).
 # - harness-tests: vitest unit + integration (mock FTP/JES round-trip).
 # - build:         electron-vite production build, asserting the main/preload/renderer artifacts.
 # - e2e:           Playwright `_electron` GUI journey driving the real built app against the
@@ -28,6 +29,21 @@ jobs:
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
       - run: npm run lint
+
+  typecheck:
+    name: Typecheck (tsc)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      # Typechecking doesn't need the Electron binary; skip it to keep this job fast.
+      - run: npm install --no-audit --no-fund
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - run: npm run typecheck
 
   harness-tests:
     name: Harness tests (vitest)

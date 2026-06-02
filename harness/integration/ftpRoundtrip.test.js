@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import PromiseFtp from 'promise-ftp';
 import { createMockJesServer } from '../mock-server.js';
-import { parseJobs, parseDatasets, parseMembers } from '../../app/utils/jesParse.js';
+import { parseJobs, parseDatasets, parseMembers } from '../../app/utils/jesParse';
 
 const srv = createMockJesServer();
 let port;
