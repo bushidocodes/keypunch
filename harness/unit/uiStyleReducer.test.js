@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import reducer from '../../app/reducers/uiStyle.js';
-import { setThemeDark, setThemeLight, setColor } from '../../app/actions/uiStyle.js';
+import reducer from '../../app/reducers/uiStyle.ts';
+import { setThemeDark, setThemeLight, setColor } from '../../app/actions/uiStyle.ts';
 
 describe('uiStyle action creators', () => {
   it('setColor returns a SET_COLOR action carrying the color', () => {

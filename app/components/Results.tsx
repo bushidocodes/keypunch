@@ -5,23 +5,61 @@ import 'ace-builds/src-noconflict/theme-github';
 import 'ace-builds/src-noconflict/theme-twilight';
 import { connect } from 'react-redux';
 import jes, { pollJobStatus } from '../utils/jesFtp';
+import type { RootState } from '../reducers';
+import type { JobEntry } from '../reducers/jobs';
+
+function mapStateToProps(state: RootState) {
+  return {
+    jobs:        state.jobs,
+    theme:       state.uiStyle.theme,
+    color:       state.uiStyle.color,
+    isConnected: state.results.isConnected,
+  };
+}
+
+function mapDispatchToProps() {
+  return {
+    deleteJob: async (jobID: string) => {
+      const confirmed = await window.keypunch.confirm({
+        buttons: ['Cancel', 'Delete'],
+        title: 'Confirm deletion',
+        message: `Are you sure that you want to delete ${jobID} from the mainframes job entry subsystem?. This is irreversible.`,
+      });
+      if (confirmed) {
+        jes.deleteJob(jobID);
+      }
+    },
+    retrieveJob: async (jobID: string) => {
+      const confirmed = await window.keypunch.confirm({
+        buttons: ['Cancel', 'Download'],
+        title: 'Confirm download',
+        message: `Are you sure that you want to download ${jobID}.`,
+      });
+      if (confirmed) {
+        jes.retrieveJob(jobID);
+      }
+    },
+  };
+}
+
+type Props = ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>;
 
 // Plain two-pane list + detail layout (replaces react-desktop's
 // MasterDetailsView, whose React-15 reconciliation threw error #120 when the
 // job list grew). The left pane lists the JES queue; selecting a job shows its
 // properties (or downloaded output) in the right pane.
-function Results(props) {
+function Results(props: Props) {
   // Old react-router v3 `onEnter={pollJobStatus}` -> run once on mount.
   useEffect(() => {
     pollJobStatus();
   }, []);
 
   const jobIDs = Object.keys(props.jobs);
-  const [selectedJobID, setSelectedJobID] = useState(null);
+  const [selectedJobID, setSelectedJobID] = useState<string | null>(null);
 
   // Resolve the currently-shown job: the selection if it still exists,
   // otherwise the first job in the queue.
-  const activeJobID =
+  const activeJobID: string | null =
     selectedJobID && props.jobs[selectedJobID]
       ? selectedJobID
       : (jobIDs.length > 0 ? jobIDs[0] : null);
@@ -36,7 +74,7 @@ function Results(props) {
     );
   }
 
-  const activeJob = activeJobID ? props.jobs[activeJobID] : null;
+  const activeJob: JobEntry | null = activeJobID ? props.jobs[activeJobID] : null;
 
   return (
     <div className="results">
@@ -63,10 +101,7 @@ function Results(props) {
             name="RESULTS" // TODO: Change this to a generated value when we add multiple editors
             value={activeJob.results}
             readOnly
-            editorProps={{
-              $blockScrolling: Infinity,
-              readOnly: true
-            }}
+            editorProps={{ $blockScrolling: Infinity, readOnly: true }}
             width="100%"
             height="100%"
             fontSize={20}
@@ -79,14 +114,14 @@ function Results(props) {
             <p># Files: {activeJob.numberOfSpoolFiles}</p>
             <button
               className="results-btn results-btn-delete"
-              onClick={() => props.deleteJob(activeJobID)}
+              onClick={() => props.deleteJob(activeJobID!)}
             >
               Delete
             </button>
-            {activeJob.numberOfSpoolFiles > 0 ? (
+            {activeJob.numberOfSpoolFiles && Number(activeJob.numberOfSpoolFiles) > 0 ? (
               <button
                 className="results-btn results-btn-download"
-                onClick={() => props.retrieveJob(activeJobID)}
+                onClick={() => props.retrieveJob(activeJobID!)}
               >
                 Download
               </button>
@@ -96,40 +131,6 @@ function Results(props) {
       </div>
     </div>
   );
-}
-
-function mapStateToProps(state) {
-  return {
-    jobs: state.jobs,
-    theme: state.uiStyle.theme,
-    color: state.uiStyle.color,
-    isConnected: state.results.isConnected
-  };
-}
-
-function mapDispatchToProps() {
-  return {
-    deleteJob: async (jobID) => {
-      const confirmed = await window.keypunch.confirm({
-        buttons: ['Cancel', 'Delete'],
-        title: 'Confirm deletion',
-        message: `Are you sure that you want to delete ${jobID} from the mainframes job entry subsystem?. This is irreversible.`
-      });
-      if (confirmed) {
-        jes.deleteJob(jobID); // jes.deleteJob has a dispatch statement in it.
-      }
-    },
-    retrieveJob: async (jobID) => {
-      const confirmed = await window.keypunch.confirm({
-        buttons: ['Cancel', 'Download'],
-        title: 'Confirm download',
-        message: `Are you sure that you want to download ${jobID}.`
-      });
-      if (confirmed) {
-        jes.retrieveJob(jobID); // jes.retrieveJob has a dispatch statement in it.
-      }
-    }
-  };
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Results);

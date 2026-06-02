@@ -1,13 +1,34 @@
 import { connect } from 'react-redux';
-import { setHostName, setFtpPort, setFtpUserName, setFtpPassword } from '../actions/configForm.js';
+import { setHostName, setFtpPort, setFtpUserName, setFtpPassword } from '../actions/configForm';
 import { setThemeDark, setThemeLight } from '../actions/uiStyle';
+import type { RootState } from '../reducers';
+import type { AppDispatch } from '../store/configureStore';
 
-function ConfigForm(props) {
-  const hostName = props.hostName;
-  const ftpPort = props.ftpPort;
-  const ftpUserName = props.ftpUserName;
-  const ftpPassword = props.ftpPassword;
+function mapStateToProps(state: RootState) {
+  return {
+    hostName:    state.config.hostName,
+    ftpPort:     state.config.ftpPort,
+    ftpUserName: state.config.ftpUserName,
+    ftpPassword: state.config.ftpPassword,
+    theme:       state.uiStyle.theme,
+    color:       state.uiStyle.color,
+  };
+}
 
+function mapDispatchToProps(dispatch: AppDispatch) {
+  return {
+    setHostName:    (hostName: string)    => dispatch(setHostName(hostName)),
+    setFtpPort:     (ftpPort: string)     => dispatch(setFtpPort(ftpPort)),
+    setFtpUserName: (ftpUserName: string) => dispatch(setFtpUserName(ftpUserName)),
+    setFtpPassword: (ftpPassword: string) => dispatch(setFtpPassword(ftpPassword)),
+    setThemeDark:   ()                    => dispatch(setThemeDark()),
+    setThemeLight:  ()                    => dispatch(setThemeLight()),
+  };
+}
+
+type Props = ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>;
+
+function ConfigForm(props: Props) {
   const labelColor = props.theme === 'dark' ? 'white' : '#333';
   const inputStyle = props.theme === 'dark'
     ? { background: 'black', color: 'white' }
@@ -21,14 +42,14 @@ function ConfigForm(props) {
         style={inputStyle}
         placeholder="192.168.0.1"
         onChange={(evt) => props.setHostName(evt.target.value)}
-        value={hostName}
+        value={props.hostName}
       />
       <label className="config-label" style={{ color: labelColor }}>FTP Port</label>
       <input
         key="ftpPort"
         style={inputStyle}
         onChange={(evt) => props.setFtpPort(evt.target.value)}
-        value={ftpPort}
+        value={props.ftpPort}
       />
       <label className="config-label" style={{ color: labelColor }}>FTP User Name</label>
       <input
@@ -36,7 +57,7 @@ function ConfigForm(props) {
         style={inputStyle}
         placeholder="Gene.Amdahl"
         onChange={(evt) => props.setFtpUserName(evt.target.value)}
-        value={ftpUserName}
+        value={props.ftpUserName}
       />
       <label className="config-label" style={{ color: labelColor }}>FTP Password</label>
       <input
@@ -44,7 +65,7 @@ function ConfigForm(props) {
         style={inputStyle}
         placeholder="Password"
         type="password"
-        value={ftpPassword}
+        value={props.ftpPassword}
         onChange={(evt) => props.setFtpPassword(evt.target.value)}
       />
       <label className="config-label" style={{ color: labelColor }}>Theme</label>
@@ -71,28 +92,6 @@ function ConfigForm(props) {
       </div>
     </div>
   );
-}
-
-function mapStateToProps(state) {
-  return {
-    hostName: state.config.hostName,
-    ftpPort: state.config.ftpPort,
-    ftpUserName: state.config.ftpUserName,
-    ftpPassword: state.config.ftpPassword,
-    theme: state.uiStyle.theme,
-    color: state.uiStyle.color
-  };
-}
-
-function mapDispatchToProps(dispatch) {
-  return {
-    setHostName: (hostName) => dispatch(setHostName(hostName)),
-    setFtpPort: (ftpPort) => dispatch(setFtpPort(ftpPort)),
-    setFtpUserName: (ftpUserName) => dispatch(setFtpUserName(ftpUserName)),
-    setFtpPassword: (ftpPassword) => dispatch(setFtpPassword(ftpPassword)),
-    setThemeDark: () => dispatch(setThemeDark()),
-    setThemeLight: () => dispatch(setThemeLight())
-  };
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ConfigForm);

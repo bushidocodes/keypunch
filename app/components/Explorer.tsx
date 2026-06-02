@@ -5,17 +5,24 @@ import 'ace-builds/src-noconflict/theme-github';
 import 'ace-builds/src-noconflict/theme-twilight';
 import { connect } from 'react-redux';
 import jesFtp, { listDatasets } from '../utils/jesFtp';
+import type { Dataset, Member } from '../utils/jesParse';
+import type { RootState } from '../reducers';
 
 // Minimal custom collapsible tree (replaces react-treebeard, which is
 // unmaintained and React-18-incompatible). It preserves the data shape produced
 // by parseDatasets/parseMembers: an array of dataset nodes, each with a
 // `.children` array of member nodes. Datasets toggle open/closed; clicking a
 // member (a leaf node, no `children`) retrieves it into the editor.
-function DatasetTree({ datasets, onSelectMember }) {
-  // Track which dataset names are expanded.
-  const [expanded, setExpanded] = useState({});
+interface DatasetTreeProps {
+  datasets: Dataset[];
+  onSelectMember: (member: Member) => void;
+}
 
-  const toggle = (name) =>
+function DatasetTree({ datasets, onSelectMember }: DatasetTreeProps) {
+  // Track which dataset names are expanded.
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const toggle = (name: string) =>
     setExpanded((prev) => ({ ...prev, [name]: !prev[name] }));
 
   const nodes = Array.isArray(datasets) ? datasets : [];
@@ -23,7 +30,7 @@ function DatasetTree({ datasets, onSelectMember }) {
   return (
     <ul className="tree">
       {nodes.map((dataset) => {
-        const isOpen = !!expanded[dataset.name];
+        const isOpen  = !!expanded[dataset.name];
         const members = dataset.children || [];
         return (
           <li key={dataset.name} className="tree-dataset">
@@ -55,14 +62,25 @@ function DatasetTree({ datasets, onSelectMember }) {
   );
 }
 
-function Explorer(props) {
+function mapStateToProps(state: RootState) {
+  return {
+    datasets:        state.datasets,
+    theme:           state.uiStyle.theme,
+    color:           state.uiStyle.color,
+    explorerContent: state.explorer.explorerContent,
+  };
+}
+
+type Props = ReturnType<typeof mapStateToProps>;
+
+function Explorer(props: Props) {
   // Old react-router v3 `onEnter={listDatasets}` -> run once on mount.
   useEffect(() => {
     listDatasets();
   }, []);
 
-  const onSelectMember = (member) => {
-    // Members are leaf nodes (no `children`); retrieve into the editor pane.
+  const onSelectMember = (member: Member) => {
+    // Members are leaf nodes; retrieve into the editor pane.
     jesFtp.retrieveMember(member.attributes.dsname, member.name);
   };
 
@@ -77,10 +95,7 @@ function Explorer(props) {
           theme={props.theme === 'dark' ? 'twilight' : 'github'}
           name="EXPLORER" // TODO: Change this to a generated value when we add multiple editors
           readOnly
-          editorProps={{
-            $blockScrolling: Infinity,
-            readOnly: true
-          }}
+          editorProps={{ $blockScrolling: Infinity, readOnly: true }}
           value={props.explorerContent}
           width="100%"
           height="100%"
@@ -89,15 +104,6 @@ function Explorer(props) {
       </div>
     </div>
   );
-}
-
-function mapStateToProps(state) {
-  return {
-    datasets: state.datasets,
-    theme: state.uiStyle.theme,
-    color: state.uiStyle.color,
-    explorerContent: state.explorer.explorerContent
-  };
 }
 
 export default connect(mapStateToProps)(Explorer);

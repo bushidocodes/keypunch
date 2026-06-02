@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import reducer from '../../app/reducers/results.js';
+import reducer from '../../app/reducers/results.ts';
 import {
   setIsConnected,
   setIsConnecting,
   setResultsContent,
   setCurrentStep
-} from '../../app/actions/results.js';
+} from '../../app/actions/results.ts';
 
 describe('results reducer', () => {
   it('has the expected initial state', () => {

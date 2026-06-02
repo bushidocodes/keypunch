@@ -14,7 +14,10 @@ const rootReducer = combineReducers({
   uiStyle,
   jobs,
   datasets,
-  explorer
+  explorer,
 });
 
 export default rootReducer;
+
+/** The shape of the entire Redux state tree. */
+export type RootState = ReturnType<typeof rootReducer>;

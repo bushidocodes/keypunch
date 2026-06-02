@@ -1,7 +1,7 @@
 // Thin renderer-side JES client.
 //
 // All FTP/JES I/O now runs in the MAIN process behind `window.keypunch.jes.*`
-// (see electron/main.js + electron/preload.js). This module keeps the SAME
+// (see electron/main.ts + electron/preload.ts). This module keeps the SAME
 // public surface and the SAME redux dispatch points as the old renderer-side
 // implementation, but instead of opening sockets itself it:
 //   1. dispatches the connecting/submitting/retrieving flags,
@@ -22,21 +22,22 @@ import {
   setIsRetrieved,
   setIsRetrieving,
   setIsDisconnected,
-  setIsDisconnecting
+  setIsDisconnecting,
 } from '../actions/results';
 import { refreshJobs, loadJobResults } from '../actions/jobs';
 import { setExplorerContent } from '../actions/explorer';
 import { refreshDatasets } from '../actions/datasets';
 import { parseJobs, parseDatasets, parseMembers } from './jesParse';
+import type { FtpConfig } from '../keypunch';
 
-// Pull the FTP config out of redux. This is exactly the shape main expects.
-function getConfig() {
+// Pull the FTP config out of Redux. This is exactly the shape main expects.
+function getConfig(): FtpConfig {
   const { config } = store.getState();
   return {
     hostName: config.hostName,
     ftpPort: config.ftpPort,
     ftpUserName: config.ftpUserName,
-    ftpPassword: config.ftpPassword
+    ftpPassword: config.ftpPassword,
   };
 }
 
@@ -46,19 +47,19 @@ function bridge() {
 
 class JES {
   constructor() {
-    this.connect = this.connect.bind(this);
-    this.disconnect = this.disconnect.bind(this);
+    this.connect       = this.connect.bind(this);
+    this.disconnect    = this.disconnect.bind(this);
     this.pollJobStatus = this.pollJobStatus.bind(this);
-    this.submitJob = this.submitJob.bind(this);
-    this.deleteJob = this.deleteJob.bind(this);
-    this.retrieveJob = this.retrieveJob.bind(this);
-    this.listDatasets = this.listDatasets.bind(this);
+    this.submitJob     = this.submitJob.bind(this);
+    this.deleteJob     = this.deleteJob.bind(this);
+    this.retrieveJob   = this.retrieveJob.bind(this);
+    this.listDatasets  = this.listDatasets.bind(this);
     this.retrieveMember = this.retrieveMember.bind(this);
-    this._errorLookup = this._errorLookup.bind(this);
+    this._errorLookup  = this._errorLookup.bind(this);
   }
 
   // Connect if not already connected.
-  async connect() {
+  async connect(): Promise<void> {
     store.dispatch(setIsConnecting(true));
     store.dispatch(setIsConnected(false));
     try {
@@ -70,7 +71,7 @@ class JES {
     }
   }
 
-  async disconnect() {
+  async disconnect(): Promise<void> {
     store.dispatch(setIsDisconnecting(true));
     try {
       await bridge().disconnect();
@@ -88,7 +89,7 @@ class JES {
     store.dispatch(setIsDisconnecting(false));
   }
 
-  async pollJobStatus() {
+  async pollJobStatus(): Promise<void> {
     store.dispatch(setIsSubmitting(true));
     store.dispatch(setIsRetrieving(true));
     store.dispatch(setIsConnecting(true));
@@ -98,8 +99,8 @@ class JES {
       store.dispatch(setIsConnected(true));
       // parseJobs throws on an unreadable queue and returns {} for the known
       // empty-queue informational message; both paths dispatch refreshJobs.
-      const jobs = parseJobs(rows);
-      store.dispatch(refreshJobs(jobs));
+      const parsedJobs = parseJobs(rows);
+      store.dispatch(refreshJobs(parsedJobs));
       store.dispatch(setIsSubmitting(false));
       store.dispatch(setIsRetrieving(false));
     } catch (err) {
@@ -107,7 +108,7 @@ class JES {
     }
   }
 
-  async submitJob(content) {
+  async submitJob(content: string): Promise<void> {
     store.dispatch(setIsSubmitting(true));
     store.dispatch(setIsRetrieving(true));
     try {
@@ -121,7 +122,7 @@ class JES {
     }
   }
 
-  async deleteJob(jobID) {
+  async deleteJob(jobID: string): Promise<void> {
     store.dispatch(setIsSubmitting(true));
     store.dispatch(setIsRetrieving(true));
     try {
@@ -133,7 +134,7 @@ class JES {
     }
   }
 
-  async retrieveJob(jobID) {
+  async retrieveJob(jobID: string): Promise<void> {
     store.dispatch(setIsSubmitting(true));
     store.dispatch(setIsRetrieving(true));
     try {
@@ -147,7 +148,7 @@ class JES {
     }
   }
 
-  async listDatasets() {
+  async listDatasets(): Promise<void> {
     store.dispatch(setIsSubmitting(true));
     store.dispatch(setIsRetrieving(true));
     store.dispatch(setIsConnecting(true));
@@ -179,7 +180,7 @@ class JES {
     }
   }
 
-  async retrieveMember(datasetName, memberName) {
+  async retrieveMember(datasetName: string, memberName: string): Promise<void> {
     store.dispatch(setIsSubmitting(true));
     store.dispatch(setIsRetrieving(true));
     try {
@@ -193,19 +194,19 @@ class JES {
     }
   }
 
-  _errorLookup(err) {
+  _errorLookup(err: unknown): void {
     store.dispatch(setIsSubmitting(false));
     store.dispatch(setIsRetrieving(false));
     store.dispatch(setIsConnecting(false));
-    console.log('JES error:', err && err.message ? err.message : err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.log('JES error:', message);
   }
 }
 
 const jes = new JES();
 export default jes;
 
-// react-router `onEnter` handlers in routes.js import these as named exports.
-// They were broken in the original (imported but never exported); now they are
-// real, bound functions.
+// react-router `onEnter` handlers exported as named exports so routes and
+// components can import them directly.
 export const pollJobStatus = jes.pollJobStatus;
-export const listDatasets = jes.listDatasets;
+export const listDatasets  = jes.listDatasets;

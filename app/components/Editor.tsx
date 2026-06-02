@@ -4,8 +4,26 @@ import 'ace-builds/src-noconflict/theme-github';
 import 'ace-builds/src-noconflict/theme-twilight';
 import { connect } from 'react-redux';
 import { setEditorContent } from '../actions/editor';
+import type { RootState } from '../reducers';
+import type { AppDispatch } from '../store/configureStore';
 
-function Editor(props) {
+function mapStateToProps(state: RootState) {
+  return {
+    editorContent: state.editor.editorContent,
+    theme:         state.uiStyle.theme,
+    color:         state.uiStyle.color,
+  };
+}
+
+function mapDispatchToProps(dispatch: AppDispatch) {
+  return {
+    setEditorContent: (newValue: string) => dispatch(setEditorContent(newValue)),
+  };
+}
+
+type Props = ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>;
+
+function Editor(props: Props) {
   return (
     <AceEditor
       mode="java"
@@ -21,17 +39,4 @@ function Editor(props) {
   );
 }
 
-function mapStateToProps(state) {
-  return {
-    editorContent: state.editor.editorContent,
-    theme: state.uiStyle.theme,
-    color: state.uiStyle.color
-  };
-}
-
-function mapDispatchToProps(dispatch) {
-  return {
-    setEditorContent: (newValue) => dispatch(setEditorContent(newValue))
-  };
-}
 export default connect(mapStateToProps, mapDispatchToProps)(Editor);

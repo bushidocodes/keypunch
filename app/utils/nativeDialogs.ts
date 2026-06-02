@@ -11,11 +11,11 @@ import {
   setIsRetrieved,
   setIsRetrieving,
   setIsDisconnected,
-  setIsDisconnecting
+  setIsDisconnecting,
 } from '../actions/results';
 import { store } from '../index';
 
-export async function openFilePicker() {
+export async function openFilePicker(): Promise<void> {
   const result = await window.keypunch.openFile();
   if (result) {
     store.dispatch(setEditorContent(result.content));
@@ -23,13 +23,13 @@ export async function openFilePicker() {
   }
 }
 
-export function newFile() {
+export function newFile(): void {
   store.dispatch(setEditorContent(''));
   store.dispatch(setEditorPath(''));
 }
 
-export async function saveFile(overwrite = false) {
-  const currentPath = store.getState().editor.editorPath;
+export async function saveFile(overwrite = false): Promise<void> {
+  const currentPath   = store.getState().editor.editorPath;
   const editorContent = store.getState().editor.editorContent;
   const savedPath = await window.keypunch.saveFile(editorContent, currentPath, overwrite);
   if (savedPath) {
@@ -37,7 +37,7 @@ export async function saveFile(overwrite = false) {
   }
 }
 
-export function testIndicators() {
+export function testIndicators(): void {
   const tests = [
     () => setIsConnecting(true),
     () => setIsConnecting(false),
@@ -54,7 +54,7 @@ export function testIndicators() {
     () => setIsConnected(false),
     () => setIsSubmitted(false),
     () => setIsRetrieved(false),
-    () => setIsDisconnected(false)
+    () => setIsDisconnected(false),
   ];
   tests.forEach((test, index) => {
     window.setTimeout(() => { store.dispatch(test()); }, 2000 * index);
