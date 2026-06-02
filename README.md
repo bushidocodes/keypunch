@@ -1,5 +1,4 @@
 # Keypunch
-[![Code Climate](https://codeclimate.com/github/spmcbride1201/keypunch-electron/badges/gpa.svg)](https://codeclimate.com/github/spmcbride1201/keypunch-electron) ![David-DM Dependency Badge](https://david-dm.org/spmcbride1201/keypunch-electron.svg)
 <p align="center">
 <img  src='./resources/images/Keypunch Icon.png'/>
 </p>
@@ -104,20 +103,16 @@ npm test           # vitest: jesParse + reducer unit tests, mock FTP/JES round-t
 npm run e2e        # Playwright _electron GUI journey against the built app + mock server
 ```
 
-## Build with love using
+## Built with
+* [electron-vite](https://electron-vite.org/) + [Vite](https://vite.dev/)
+* [Electron](https://www.electronjs.org/)
+* [React](https://react.dev/)
+* [Redux](https://redux.js.org/) + [React Router](https://reactrouter.com/)
 * [React Desktop](https://github.com/gabrielbull/react-desktop)
-* [Electron React Boilerplate](https://github.com/chentsulin/electron-react-boilerplate) 
-* [Electron](http://electron.atom.io/) 
-* [React](https://facebook.github.io/react/)
-* [Redux](https://github.com/reactjs/redux)
-* [React Router](https://github.com/reactjs/react-router)
-* [Webpack](http://webpack.github.io/docs/)
-* [React Transform HMR](https://github.com/gaearon/react-transform-hmr)
-* [Devtron](https://github.com/electron/devtron)
-* [electron-debug](https://github.com/sindresorhus/electron-debug)
-* [React Developer Tools](https://github.com/facebook/react-devtools) 
-* [electron-devtools-installer](https://github.com/GPMDP/electron-devtools-installer)
-* [Redux DevTools](https://github.com/zalmoxisus/redux-devtools-extension)
+* [Ace](https://ace.c9.io/) via [react-ace](https://github.com/securingsincity/react-ace)
+* [electron-builder](https://www.electron.build/)
+
+> Originally generated from [Electron React Boilerplate](https://github.com/chentsulin/electron-react-boilerplate); the build/runtime stack has since been modernized (see [MODERNIZATION.md](MODERNIZATION.md)).
 
 ## Useful Resources
 * http://www.ibm.com/support/knowledgecenter/SSLTBW_2.1.0/com.ibm.zos.v2r1.halu001/intfjesexample.htm

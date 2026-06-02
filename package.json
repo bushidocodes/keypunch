@@ -52,7 +52,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/spmcbride1201/keypunch-electron.git"
+    "url": "git+https://github.com/bushidocodes/keypunch-old.git"
   },
   "author": {
     "name": "Sean P. McBride",
@@ -61,12 +61,12 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/spmcbride1201/keypunch-electron/issues"
+    "url": "https://github.com/bushidocodes/keypunch-old/issues"
   },
   "keywords": [
     "mainframe"
   ],
-  "homepage": "https://github.com/spmcbride1201/keypunch-electron#readme",
+  "homepage": "https://github.com/bushidocodes/keypunch-old#readme",
   "devDependencies": {
     "electron": "^42.0.0",
     "electron-builder": "^26.0.0",
