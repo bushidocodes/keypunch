@@ -72,8 +72,15 @@ a:hover {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #1b222c;
   padding-top: 8px;
+}
+
+.theme-dark .nav-pane {
+  background-color: #141414; /* matches Ace Twilight background */
+}
+
+.theme-light .nav-pane {
+  background-color: #f0f0f0; /* matches Ace GitHub (light) theme family */
 }
 
 .nav-item {
@@ -91,7 +98,14 @@ a:hover {
 
 .nav-item-active {
   opacity: 1;
+}
+
+.theme-dark .nav-item-active {
   background-color: #31363f;
+}
+
+.theme-light .nav-item-active {
+  background-color: #d8d8d8;
 }
 
 .nav-item .nav-icon {
@@ -105,6 +119,10 @@ a:hover {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+}
+
+.theme-light .app-content {
+  background-color: #ffffff;
 }
 
 /* ------------------------------------------------------------------ */
@@ -168,6 +186,11 @@ a:hover {
   padding: 4px 0;
 }
 
+.theme-light .explorer-tree {
+  background-color: #f0f0f0;
+  color: #555555;
+}
+
 .explorer-editor {
   flex: 1 1 auto;
   min-width: 0;
@@ -195,6 +218,10 @@ a:hover {
 
 .tree-node:hover {
   background-color: #31363F;
+}
+
+.theme-light .tree-node:hover {
+  background-color: #d8d8d8;
 }
 
 .tree-toggle {
@@ -228,6 +255,11 @@ a:hover {
   border-right: 1px solid #31363F;
 }
 
+.theme-light .results-list {
+  background-color: #f0f0f0;
+  border-right-color: #d8d8d8;
+}
+
 .results-list-item {
   padding: 8px 12px;
   cursor: pointer;
@@ -235,13 +267,26 @@ a:hover {
   color: #cfd6dc;
 }
 
+.theme-light .results-list-item {
+  color: #555555;
+}
+
 .results-list-item:hover {
   background-color: #31363F;
+}
+
+.theme-light .results-list-item:hover {
+  background-color: #d8d8d8;
 }
 
 .results-list-item-active {
   background-color: #31363F;
   color: #ffffff;
+}
+
+.theme-light .results-list-item-active {
+  background-color: #d8d8d8;
+  color: #000000;
 }
 
 .results-detail {

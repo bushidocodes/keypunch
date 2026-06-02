@@ -98,5 +98,10 @@
     "react-dom": "^18.3.1",
     "react-redux": "^9.2.0",
     "react-router-dom": "^6.30.4"
+  },
+  "allowScripts": {
+    "electron-winstaller@5.4.0": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.27.7": true
   }
 }
