@@ -1,14 +1,18 @@
 import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
-  // @vitejs/plugin-react handles JSX + Fast-Refresh for component tests.
-  // It has no effect on the plain-JS unit/integration tests.
-  plugins: [react()],
+  // Use vite's built-in esbuild JSX transform instead of @vitejs/plugin-react.
+  // This avoids a dependency on Babel (and the Babel packages that live in the
+  // project root's node_modules rather than the harness's), is faster in the
+  // test runner, and is functionally equivalent for our test setup since we
+  // don't need React Fast Refresh here.
+  esbuild: {
+    jsx: 'automatic', // emit `import { jsx } from 'react/jsx-runtime'` instead of React.createElement
+  },
 
   test: {
     // Default environment for unit / integration tests (unchanged).
@@ -46,9 +50,9 @@ export default defineConfig({
   // Force react-redux to be processed inline by vitest's transform (not
   // pre-bundled) so its internal "import * as React from 'react'" goes through
   // the same module registry as everything else.  Without this, the
-  // pre-bundled react-redux chunk can reference a different ReactCurrentDispatcher
-  // than what react-dom sets up, causing "Cannot read properties of null
-  // (reading 'useMemo')" inside Provider.
+  // pre-bundled react-redux chunk gets a separate ReactCurrentDispatcher
+  // instance from react-dom, causing "Cannot read properties of null (reading
+  // 'useMemo')" inside Provider.
   optimizeDeps: {
     exclude: ['react-redux', '@reduxjs/toolkit'],
   },

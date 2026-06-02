@@ -8,7 +8,7 @@
 //   • the theme radios default to "Dark" and switching works
 //   • the useEffect syncs credentials to main on mount
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ConfigForm from '../../app/components/ConfigForm';

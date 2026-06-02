@@ -124,6 +124,49 @@ export default [
     }
   },
 
+  // --- Component tests: harness/component/**/*.{js,jsx} ----------------------
+  // These run under jsdom (browser-like), so window/document/etc. must be
+  // known globals.  JSX support is also needed for the .jsx test files.
+  {
+    files: ['harness/component/**/*.{js,jsx}'],
+    plugins: {
+      react,
+      'react-hooks': reactHooks
+    },
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      parserOptions: {
+        ecmaFeatures: { jsx: true }
+      },
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        vi: 'readonly'
+      }
+    },
+    settings: {
+      react: { version: '18' }
+    },
+    rules: {
+      // react/jsx-uses-vars marks JSX element names (e.g. <Foo />) as "used"
+      // so no-unused-vars doesn't flag the import.
+      'react/jsx-uses-vars': 'error',
+      'react/react-in-jsx-scope': 'off',
+      'react/jsx-uses-react': 'off',
+      'react/prop-types': 'off',
+      'no-unused-vars': 'error'
+    }
+  },
+
   // The e2e drives the renderer via Playwright; its `win.evaluate(() => ...)`
   // callbacks run in the BROWSER, so `window` must be a known global there.
   {

@@ -58,6 +58,14 @@ jobs:
           node-version: '20'
           cache: npm
           cache-dependency-path: harness/package-lock.json
+      # Install root deps first so react / react-dom / react-redux resolve from
+      # the project root's node_modules — the component tests rely on a single
+      # shared copy of React rather than maintaining a separate one in harness/.
+      - name: Install root deps (no Electron binary)
+        run: npm install --no-audit --no-fund
+        working-directory: .
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
       - run: npm ci
       - run: npm test
 
