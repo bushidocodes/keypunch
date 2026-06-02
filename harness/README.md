@@ -1,6 +1,6 @@
 # Keypunch verification harness
 
-The safety net for the [modernization](../MODERNIZATION.md). It runs on **modern Node**
+The safety net for the modernization. It runs on **modern Node**
 (≥18) and was the Definition of Done for every phase: a mock z/OS FTP/JES server plus
 unit, integration, and Playwright GUI-e2e tests. All of it runs in CI.
 
