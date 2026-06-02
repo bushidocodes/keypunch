@@ -8,30 +8,26 @@
 //
 // Journey covered (mirrors the Testing & Verification Protocol):
 //   app renders -> Config pane: enter host/port/user/pass
-//   -> Results pane (onEnter=pollJobStatus): the seeded JES queue renders
-//   -> Explorer pane (onEnter=listDatasets): datasets + members render
+//   -> Explorer pane (useEffect=listDatasets): datasets + members render
 //   -> open a member into the editor (member COBOL source loads into Ace)
+//   -> Results pane (useEffect=pollJobStatus): the seeded JES queue renders,
+//      and the job IDs (JOB00045 / JOB00046) appear in the Results DOM directly
 //   -> Submit ("LOAD"): the job is really STORed to the mainframe
 //   -> Disconnect (INTERRUPT): connection indicator clears.
 //
-// KNOWN PRE-EXISTING LIMITATION (deferred to Phase 4 — react-desktop refresh):
-//   The Results pane's react-desktop `MasterDetailsView` throws React 15
-//   reconciliation error #120 ("dangerouslyReplaceNodeWithMarkup") when it
-//   *re-renders with a changed job list* under modern Chromium, and corrupts
-//   the next route transition. This is a react-desktop@0.2.14 + React-15
-//   incompatibility, unrelated to the electron-vite/secure-model migration
-//   (the components are unchanged). To stay honest, this test:
-//     * orders Explorer before the final Results visit (the MasterDetailsView
-//       only corrupts transitions AFTER it has rendered a populated list), and
-//     * asserts the LOAD submit succeeded by inspecting the AUTHORITATIVE mock
-//       server state (the job really lands on the mainframe), rather than the
-//       Results DOM, which cannot re-render the grown list on React 15.
+// Phase 4 note: react-desktop is gone. The Results pane is now a plain
+// list+detail layout, so the React-15 reconciliation error #120 that the old
+// MasterDetailsView threw on a growing job list no longer exists. The previous
+// workaround (visit Results last, assert only the authoritative mock state
+// because the DOM couldn't re-render the grown list) has been removed: we now
+// assert the job list directly in the Results DOM AND cross-check the mock state
+// after submit.
 //
 // Native dialogs (the submit confirmation message box) are stubbed in the MAIN
 // process via electronApp.evaluate so the journey runs headless.
 //
-// NavPane note: the side nav is collapsed (icons only, no text), so nav items
-// are addressed by their anchor index: 0=edit, 1=results, 2=explorer, 3=config.
+// Nav note: the side nav is icon-only, so nav items are addressed by their
+// anchor index: 0=edit, 1=results, 2=explorer, 3=config.
 
 import { test, expect, _electron as electron } from '@playwright/test';
 import { fileURLToPath } from 'url';
@@ -115,10 +111,7 @@ test('core user journey end to end', async () => {
   await win.getByPlaceholder('Gene.Amdahl').fill('IBMUSER');
   await win.getByPlaceholder('Password').fill('secret');
 
-  // --- Explorer pane (onEnter=listDatasets): datasets + members render. ---
-  // Explorer is visited BEFORE Results: the react-desktop MasterDetailsView in
-  // Results corrupts the *next* route transition once it has rendered a job
-  // list (see header), so Results is the last pane we navigate into.
+  // --- Explorer pane (useEffect=listDatasets): datasets + members render. ---
   await nav('explorer');
   await expect(win.getByText('IBMUSER.JCL').first()).toBeVisible();
   // Expand IBMUSER.SOURCE to reveal its members (HELLO, COBOL1).
@@ -130,16 +123,17 @@ test('core user journey end to end', async () => {
   await win.getByText('HELLO').first().click();
   await expect(win.locator('.ace_content')).toContainText('PROGRAM-ID', { timeout: 15000 });
 
-  // --- Results pane (onEnter=pollJobStatus): the seeded JES queue renders. ---
+  // --- Results pane (useEffect=pollJobStatus): the seeded JES queue renders.
+  //     With react-desktop/#120 gone, the job list is real DOM we can assert. ---
   await nav('results');
-  await expect(win.getByText('JOB00045').first()).toBeVisible(); // OUTPUT, 3 spool files
-  await expect(win.getByText('JOB00046').first()).toBeVisible(); // ACTIVE
+  await expect(win.getByText('JOB00045', { exact: true })).toBeVisible(); // OUTPUT, 3 spool files
+  await expect(win.getByText('JOB00046', { exact: true })).toBeVisible(); // ACTIVE
   // The connect indicator lights after a successful poll -> INTERRUPT shows.
   await expect(win.getByText('INTERRUPT', { exact: true })).toBeVisible();
 
   // --- Submit ("LOAD" easy button): the editor contents are really STORed to
-  //     the mainframe, creating a new job. We assert against the AUTHORITATIVE
-  //     mock server state (see the file header for why not the Results DOM). ---
+  //     the mainframe, creating a new job. Cross-check the authoritative mock
+  //     server state in addition to the DOM. ---
   expect(Object.keys(srv.state().jobs).sort()).toEqual(['JOB00045', 'JOB00046']);
   await win.getByText('LOAD', { exact: true }).click();
   await expect

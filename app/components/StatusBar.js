@@ -1,5 +1,4 @@
 import React from 'react';
-import { View } from 'react-desktop/windows';
 import { connect } from 'react-redux';
 
 import Indicator from './Indicator';
@@ -9,18 +8,19 @@ import jes from '../utils/jesFtp';
 
 function StatusBar(props) {
   return (
-    <View
+    <div
+      className="status-bar"
       style={{
         bottom: '0',
         display: 'flex',
         flexDirection: 'row',
         justifyContent: 'center',
-        zIndex: '10'
+        zIndex: '10',
+        background: '#aaa',
+        width: '100%',
+        height: '50px',
+        overflow: 'hidden'
       }}
-      background="#aaa"
-      width="100%"
-      height="50px"
-      overflow="hidden"
     >
       <button
         style={{
@@ -174,7 +174,7 @@ function StatusBar(props) {
       >
         LOAD
           </button>
-    </View >
+    </div>
   );
 }
 

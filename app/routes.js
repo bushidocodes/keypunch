@@ -1,19 +1,29 @@
-// @flow
 import React from 'react';
-import { Route, IndexRoute } from 'react-router';
+import { createHashRouter } from 'react-router-dom';
 import App from './components/App';
 import Editor from './components/Editor';
 import Explorer from './components/Explorer';
 import ConfigForm from './components/ConfigForm';
 import Results from './components/Results';
-import { listDatasets, pollJobStatus } from './utils/jesFtp';
 
-export default (
-  <Route path="/" component={App}>
-    <Route path="/editor" component={Editor} />
-    <Route path="/config" component={ConfigForm} />
-    <Route path="/results" component={Results} onEnter={pollJobStatus} />
-    <Route path="/explorer" component={Explorer} onEnter={listDatasets} />
-    <IndexRoute component={Editor} />
-  </Route>
-);
+// HashRouter (createHashRouter) is required because the packaged app loads via
+// file://, where browser-history routing does not work. `App` is the layout
+// component: it renders the sidebar nav + status bar around an <Outlet/>.
+//
+// The old react-router v3 `onEnter={pollJobStatus|listDatasets}` hooks now live
+// as `useEffect(..., [])` inside the Results / Explorer route components.
+const router = createHashRouter([
+  {
+    path: '/',
+    element: <App />,
+    children: [
+      { index: true, element: <Editor /> },
+      { path: 'editor', element: <Editor /> },
+      { path: 'config', element: <ConfigForm /> },
+      { path: 'results', element: <Results /> },
+      { path: 'explorer', element: <Explorer /> }
+    ]
+  }
+]);
+
+export default router;
