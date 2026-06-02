@@ -47,7 +47,7 @@ class JES {
     }
     try {
       await this.ftp.end();
-    } catch (_) {
+    } catch {
       // fall through to a forced destroy below
     }
     status = this.ftp.getConnectionStatus();
@@ -58,7 +58,7 @@ class JES {
       numTries--;
     }
     if (status === 'disconnecting' || status === 'connected') {
-      try { this.ftp.destroy(); } catch (_) {}
+      try { this.ftp.destroy(); } catch { /* already gone */ }
     }
     // promise-ftp cannot be reused after end()/destroy(); make a fresh client
     // so a later connect() works.
@@ -129,13 +129,13 @@ class JES {
       await this.ftp.cwd(dsname);
       const rows = await this.ftp.list('');
       return rows;
-    } catch (err) {
+    } catch {
       // "No Members Found" / empty PDS — mirror the old behaviour of treating
       // this as an empty member list rather than an error.
       return [];
     } finally {
       // MVS treats the home directory as the high-level-qualifier (the userid).
-      try { await this.ftp.cwd('~'); } catch (_) {}
+      try { await this.ftp.cwd('~'); } catch { /* best-effort reset */ }
     }
   }
 
@@ -150,7 +150,7 @@ class JES {
       const stream = await this.ftp.get(member);
       return await this._streamToString(stream);
     } finally {
-      try { await this.ftp.cwd('~'); } catch (_) {}
+      try { await this.ftp.cwd('~'); } catch { /* best-effort reset */ }
     }
   }
 

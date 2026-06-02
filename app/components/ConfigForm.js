@@ -1,4 +1,3 @@
-import React from 'react';
 import { connect } from 'react-redux';
 import { setHostName, setFtpPort, setFtpUserName, setFtpPassword } from '../actions/configForm.js';
 import { setThemeDark, setThemeLight } from '../actions/uiStyle';

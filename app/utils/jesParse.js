@@ -25,7 +25,7 @@ export function parseJobs(results) {
   }
   const jobs = {};
   results.forEach((job) => {
-    const jobSplit = job.trim().split(/\ +/);
+    const jobSplit = job.trim().split(/ +/);
     const jobID = jobSplit[1];
     jobs[jobID] = {
       owner: jobSplit[0],
@@ -48,7 +48,7 @@ export function parseDatasets(results) {
   }
   const rows = results.slice(1); // drop the header row
   return rows.map((dataset) => {
-    const datasetSplit = dataset.trim().split(/\ +/);
+    const datasetSplit = dataset.trim().split(/ +/);
     const [volume, unit, referred, ext, used, recfm, lrecl, blksz, dsorg, dsname] = datasetSplit;
     return {
       name: dsname,
@@ -65,7 +65,7 @@ export function parseDatasets(results) {
 export function parseMembers(results, dsname) {
   const rows = (results || []).slice(1); // drop the header row
   return rows.map((member) => {
-    const memberSplit = member.trim().split(/\ +/);
+    const memberSplit = member.trim().split(/ +/);
     const name = memberSplit[0] || '';
     const vvmm = memberSplit[1] || '';
     const created = memberSplit[2] || '';

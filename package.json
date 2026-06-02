@@ -8,6 +8,8 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "start": "electron-vite preview",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "package": "electron-vite build && electron-builder --publish never",
     "package-win": "electron-vite build && electron-builder --win --x64",
     "package-linux": "electron-vite build && electron-builder --linux",
@@ -68,10 +70,15 @@
   ],
   "homepage": "https://github.com/bushidocodes/keypunch-old#readme",
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@vitejs/plugin-react": "^5.0.0",
     "electron": "^42.0.0",
     "electron-builder": "^26.0.0",
     "electron-vite": "^5.0.0",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.6.0",
     "vite": "^7.0.0"
   },
   "dependencies": {

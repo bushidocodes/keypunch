@@ -1,4 +1,3 @@
-import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { renderIcon } from '../utils/renderIcon';

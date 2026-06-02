@@ -31,10 +31,15 @@
 
 import { test, expect, _electron as electron } from '@playwright/test';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 import { createMockJesServer } from '../mock-server.js';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
-const electronExe = fileURLToPath(new URL('../../node_modules/electron/dist/electron.exe', import.meta.url));
+// The `electron` package's default export is the path to the platform-correct
+// binary (electron.exe on Windows, `electron` on Linux/mac). Resolving it this
+// way keeps the e2e cross-platform: works locally on Windows and in CI on Linux
+// (xvfb). It resolves up to the repo-root node_modules/electron.
+const electronExe = createRequire(import.meta.url)('electron');
 
 const NAV = { edit: 0, results: 1, explorer: 2, config: 3 };
 
@@ -51,7 +56,9 @@ test.beforeAll(async () => {
 
   electronApp = await electron.launch({
     executablePath: electronExe,
-    args: ['.'],
+    // On Linux CI the setuid/namespace sandbox often isn't available, so disable
+    // it there; locally (Windows/mac) launch normally.
+    args: process.platform === 'linux' ? ['--no-sandbox', '.'] : ['.'],
     cwd: repoRoot,
     timeout: 45000,
     env: { ...process.env, NODE_ENV: 'production' }
