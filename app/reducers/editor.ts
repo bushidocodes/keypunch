@@ -1,13 +1,21 @@
 import { SET_EDITOR_CONTENT, SET_EDITOR_PATH } from '../constants';
+import type { EditorAction } from '../actions/editor';
 
-const initialEditorState = {
+export interface EditorState {
+  editorContent: string;
+  editorPath: string;
+}
+
+const initialEditorState: EditorState = {
   editorContent: '',
-  editorPath: ''
+  editorPath: '',
 };
 
-export default function (state = initialEditorState, action) {
-
-  const newState = Object.assign({}, state);
+export default function editor(
+  state: EditorState = initialEditorState,
+  action: EditorAction
+): EditorState {
+  const newState = { ...state };
 
   switch (action.type) {
     case SET_EDITOR_CONTENT:

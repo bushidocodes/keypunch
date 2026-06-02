@@ -10,34 +10,25 @@ import './app.global.css';
 // Hack: Exporting Store to have access in nativeDialogs / jesFtp.
 export const store = configureStore();
 
-// The native application menu is built in the MAIN process now. Menu clicks for
+// The native application menu is built in the MAIN process. Menu clicks for
 // editor actions arrive over IPC on the 'menu' channel; wire them to the same
 // handlers the menu used to call directly.
-if (window.keypunch && window.keypunch.onMenu) {
+if (window.keypunch?.onMenu) {
   window.keypunch.onMenu((channel) => {
     switch (channel) {
-      case 'file:new':
-        newFile();
-        break;
-      case 'file:open':
-        openFilePicker();
-        break;
-      case 'file:save':
-        saveFile(true);
-        break;
-      case 'file:saveAs':
-        saveFile(false);
-        break;
-      case 'kill-ftp':
-        jes.disconnect();
-        break;
-      default:
-        break;
+      case 'file:new':    newFile();          break;
+      case 'file:open':   openFilePicker();   break;
+      case 'file:save':   saveFile(true);     break;
+      case 'file:saveAs': saveFile(false);    break;
+      case 'kill-ftp':    jes.disconnect();   break;
+      default: break;
     }
   });
 }
 
-const root = createRoot(document.getElementById('root'));
+const rootEl = document.getElementById('root');
+if (!rootEl) throw new Error('Root element #root not found');
+const root = createRoot(rootEl);
 root.render(
   <Provider store={store}>
     <RouterProvider router={router} />

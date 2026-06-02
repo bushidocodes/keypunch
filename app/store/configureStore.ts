@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 // Single Redux Toolkit store. RTK's `configureStore` wires up the thunk
 // middleware (used by the jes.* action-creators that are dispatched as
 // functions) and, in development, the dev-tools integration.
@@ -10,23 +11,29 @@
 import { configureStore as rtkConfigureStore } from '@reduxjs/toolkit';
 import rootReducer from '../reducers';
 
-export default function configureStore(preloadedState) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default function configureStore(preloadedState?: any) {
   const store = rtkConfigureStore({
     reducer: rootReducer,
     preloadedState,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
         immutableCheck: false,
-        serializableCheck: false
+        serializableCheck: false,
       }),
-    devTools: import.meta.env.DEV
+    devTools: import.meta.env.DEV,
   });
 
   if (import.meta.hot) {
-    import.meta.hot.accept('../reducers', (mod) => {
-      if (mod) store.replaceReducer(mod.default);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    import.meta.hot.accept('../reducers', (mod: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (mod) store.replaceReducer(mod.default as any);
     });
   }
 
   return store;
 }
+
+export type AppStore    = ReturnType<typeof configureStore>;
+export type AppDispatch = AppStore['dispatch'];

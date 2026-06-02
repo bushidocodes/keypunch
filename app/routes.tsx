@@ -16,13 +16,13 @@ const router = createHashRouter([
     path: '/',
     element: <App />,
     children: [
-      { index: true, element: <Editor /> },
-      { path: 'editor', element: <Editor /> },
-      { path: 'config', element: <ConfigForm /> },
-      { path: 'results', element: <Results /> },
-      { path: 'explorer', element: <Explorer /> }
-    ]
-  }
+      { index: true,          element: <Editor />     },
+      { path: 'editor',       element: <Editor />     },
+      { path: 'config',       element: <ConfigForm /> },
+      { path: 'results',      element: <Results />    },
+      { path: 'explorer',     element: <Explorer />   },
+    ],
+  },
 ]);
 
 export default router;

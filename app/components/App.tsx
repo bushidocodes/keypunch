@@ -1,18 +1,28 @@
 import { Outlet, NavLink } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { renderIcon } from '../utils/renderIcon';
-import StatusBar from '../components/StatusBar';
+import StatusBar from './StatusBar';
+import type { RootState } from '../reducers';
 
 // The 4 sidebar nav items. Order matters: the e2e addresses them by anchor
 // index (0=edit, 1=results, 2=explorer, 3=config).
 const NAV_ITEMS = [
-  { to: '/editor', title: 'edit', icon: 'punchCard' },
-  { to: '/results', title: 'results', icon: 'printout' },
+  { to: '/editor',   title: 'edit',     icon: 'punchCard' },
+  { to: '/results',  title: 'results',  icon: 'printout'  },
   { to: '/explorer', title: 'explorer', icon: 'mainframe' },
-  { to: '/config', title: 'config', icon: 'settings' }
-];
+  { to: '/config',   title: 'config',   icon: 'settings'  },
+] as const;
 
-function App(props) {
+function mapStateToProps(state: RootState) {
+  return {
+    theme: state.uiStyle.theme,
+    color: state.uiStyle.color,
+  };
+}
+
+type Props = ReturnType<typeof mapStateToProps>;
+
+function App(props: Props) {
   return (
     <div className={`app-root theme-${props.theme}`}>
       <div className="app-body">
@@ -37,13 +47,6 @@ function App(props) {
       <StatusBar />
     </div>
   );
-}
-
-function mapStateToProps(state) {
-  return {
-    theme: state.uiStyle.theme,
-    color: state.uiStyle.color
-  };
 }
 
 export default connect(mapStateToProps)(App);
