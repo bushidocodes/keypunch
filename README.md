@@ -16,67 +16,59 @@ While this is a work in progress focused on delivering an initial MVP, this app 
 ## Screenshot
 TODO
 
-## Running on a modern machine (verified June 2026)
+## Toolchain (modernized — Phase 1)
 
-This is a January-2017 stack (webpack 1, Babel 6, Electron 1.x, React 15) and it will **not**
-build under current Node: Node 17+ ships OpenSSL 3, which breaks webpack 1's hashing
-(`digital envelope routines::unsupported`), and Node 24 cannot run the Babel 6 toolchain at all.
+Keypunch builds with **electron-vite** (Vite 7) on a current Node LTS, runs on **Electron 42**,
+and uses the secure renderer model: `contextIsolation: true`, `nodeIntegration: false`, and a
+**preload** bridge (`window.keypunch`). All Node-side work — filesystem dialogs and the z/OS
+FTP/JES traffic (`promise-ftp`) — runs in the **main** process behind IPC; the renderer only
+parses results. No `.node-version` pin, no `--openssl-legacy-provider`, one `package.json`,
+one lockfile.
 
-Use **Node 10** via [`fnm`](https://github.com/Schniz/fnm) or [`nvm`](https://github.com/nvm-sh/nvm).
-A `.node-version` pin (`10.24.1`) is included, so a version manager will auto-select it:
+## Install & run
+
+Requires a current Node LTS (developed/verified on Node 24).
 
 ```bash
-fnm use                                # reads .node-version -> 10.24.1
-npm install --ignore-scripts           # skip the electron-builder install-app-deps postinstall
-node node_modules/electron/install.js  # fetch the Electron binary explicitly
-npm run build                          # webpack 1 -> app/main.js + app/dist/bundle.js
-npm start                              # launch the app
+npm install        # installs deps + downloads the Electron binary
+npm run dev        # electron-vite dev server (Vite renderer + main/preload), launches the app
+```
+
+To build and run the production bundle:
+
+```bash
+npm run build      # electron-vite -> out/{main,preload,renderer}
+npm start          # electron-vite preview of the built app
 ```
 
 Notes:
-* `electron@^1.4.15` resolves to **1.8.8**, which runs on Windows 11.
-* There are no native (node-gyp) dependencies, so `--ignore-scripts` is safe; it only avoids
-  the `install-app-deps` postinstall, and the explicit `electron/install.js` step replaces the
-  binary download that `--ignore-scripts` would otherwise skip.
-* The resolved dependency tree is pinned in `package-lock.json` for deterministic installs.
-* The app renders fully offline; **SUBMIT/LOAD require a live z/OS FTP endpoint** configured in
-  the Config pane.
+* The app renders fully offline; **SUBMIT/LOAD require a z/OS FTP endpoint** configured in the
+  Config pane. The [verification harness](harness/) ships a mock z/OS FTP/JES server for testing
+  (`cd harness && npm run mock`).
+* React stays at **15** for now (react-desktop pins it); the React/router/Redux refresh is
+  Phase 4. See [MODERNIZATION.md](MODERNIZATION.md).
 
-The original (2017) instructions below still describe the intended dev/HMR workflow.
+## Running / troubleshooting
 
-## Install
+**Always launch via the npm scripts (`npm run dev` or `npm start`) — don't run the `electron`
+binary directly.** electron-vite compiles the main/preload/renderer bundles and wires up the
+app paths for you. The build output (`out/`) is gitignored, so a bare `electron .` has no
+`main` to load and will fail.
 
-* **Note: requires a node version >= 6 and an npm version >= 3.**
-* **If you have installation or compilation issues with this project, please see [the Electron React Boilerplate debugging guide](https://github.com/chentsulin/electron-react-boilerplate/issues/400)**
+Common errors from invoking Electron by hand:
 
-First, clone the repo via git:
+| Dialog | Cause | Fix |
+|--------|-------|-----|
+| `Unable to find Electron app at …` / `Cannot find module '<repo path>'` | `electron .` with no build present (`out/main/main.js` missing) | Use `npm run dev`, or `npm start` (which builds, then previews) |
+| `Cannot find module '…console.log(process.versions.chrome)'` (or any expression) | Electron has **no** `-e`/`--eval` flag like Node, so the string is treated as the app path | Don't eval through Electron — see *Checking versions* below |
 
-```bash
-git clone https://github.com/spmcbride1201/keypunch-electron.git your-project-name
-```
-
-And then install dependencies.
-
-```bash
-$ cd your-project-name && npm install
-```
-
-:bulb: *In order to remove boilerplate sample code, simply run `npm run cleanup`. After this is run, the initial sample boilerplate code will be removed in order for a clean project for starting custom dev*
-
-## Run
-
-Run these two commands __simultaneously__ in different console tabs.
-
-```bash
-$ npm run hot-server
-$ npm run start-hot
-```
-
-or run two servers with one command
-
-```bash
-$ npm run dev
-```
+**Checking versions**
+* Electron: `npx electron --version` → `v42.x` (Electron 42 ships Chromium ~136 / Node ~22).
+* Chromium, from the running app: **View → Toggle Developer Tools**, then run
+  `navigator.userAgent` in the console (shows `Chrome/136…`).
+* `process` is intentionally **absent from the renderer** — that's `contextIsolation` (the
+  secure model) working as designed. Renderer code reaches Node/main only through the
+  `window.keypunch` preload bridge, never `process` or `require`.
 
 ## Packaging
 
@@ -101,20 +93,15 @@ To package apps with options:
 $ npm run package -- --[option]
 ```
 
-## Further commands
+## Tests
 
-To run the application without packaging run
-
-```bash
-$ npm run build
-$ npm start
-```
-
-To run End-to-End Test
+The [verification harness](harness/) (separate workspace, runs on modern Node) holds the
+unit/integration tests and the Playwright GUI e2e:
 
 ```bash
-$ npm run build
-$ npm run test-e2e
+cd harness && npm install
+npm test           # vitest: jesParse + reducer unit tests, mock FTP/JES round-trip
+npm run e2e        # Playwright _electron GUI journey against the built app + mock server
 ```
 
 ## Build with love using

@@ -15,8 +15,6 @@ import {
 } from 'react-desktop/windows';
 import jes from '../utils/jesFtp';
 
-const { dialog } = require('electron').remote;
-
 
 function Results(props) { // props is now from MY POV
   const jobIDs = Object.keys(props.jobs);
@@ -98,39 +96,25 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    deleteJob: (jobID) => {
-      dialog.showMessageBox({
-        type: 'question',
+    deleteJob: async (jobID) => {
+      const confirmed = await window.keypunch.confirm({
         buttons: ['Cancel', 'Delete'],
-        defaultId: 0,
         title: 'Confirm deletion',
-        message: `Are you sure that you want to delete ${jobID} from the mainframes job entry subsystem?. This is irreversible.`,
-        noLink: true
-      },
-        (response) => {
-          console.log('Button chosed was: ', response);
-          if (response === 1) {
-            console.log('Delete was confirmed');
-            jes.deleteJob(jobID); // jes.deleteJob has a dispatch statement in it.
-          }
-        });
+        message: `Are you sure that you want to delete ${jobID} from the mainframes job entry subsystem?. This is irreversible.`
+      });
+      if (confirmed) {
+        jes.deleteJob(jobID); // jes.deleteJob has a dispatch statement in it.
+      }
     },
-    retrieveJob: (jobID) => {
-      dialog.showMessageBox({
-        type: 'question',
+    retrieveJob: async (jobID) => {
+      const confirmed = await window.keypunch.confirm({
         buttons: ['Cancel', 'Download'],
-        defaultId: 0,
         title: 'Confirm download',
-        message: `Are you sure that you want to download ${jobID}.`,
-        noLink: true
-      },
-        (response) => {
-          console.log('Button chosed was: ', response);
-          if (response === 1) {
-            console.log('Dowload was confirmed');
-            jes.retrieveJob(jobID); // jes.retrieveJob has a dispatch statement in it.
-          }
-        });
+        message: `Are you sure that you want to download ${jobID}.`
+      });
+      if (confirmed) {
+        jes.retrieveJob(jobID); // jes.retrieveJob has a dispatch statement in it.
+      }
     }
   };
 }

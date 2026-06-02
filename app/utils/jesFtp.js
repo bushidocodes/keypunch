@@ -1,7 +1,20 @@
-import Promise from 'bluebird';
+// Thin renderer-side JES client.
+//
+// All FTP/JES I/O now runs in the MAIN process behind `window.keypunch.jes.*`
+// (see electron/main.js + electron/preload.js). This module keeps the SAME
+// public surface and the SAME redux dispatch points as the old renderer-side
+// implementation, but instead of opening sockets itself it:
+//   1. dispatches the connecting/submitting/retrieving flags,
+//   2. calls the corresponding preload method (which does the full FTP chain
+//      in main and returns RAW results, or throws),
+//   3. parses the raw results with the existing jesParse.js,
+//   4. dispatches the refresh/load actions.
+//
+// Parsing stays here in the renderer so the harness unit tests for jesParse
+// remain valid.
+
 import { store } from '../index';
 import {
-  setCurrentStep,
   setIsConnected,
   setIsConnecting,
   setIsSubmitted,
@@ -16,78 +29,55 @@ import { setExplorerContent } from '../actions/explorer';
 import { refreshDatasets } from '../actions/datasets';
 import { parseJobs, parseDatasets, parseMembers } from './jesParse';
 
-const PromiseFtp = require('promise-ftp');
+// Pull the FTP config out of redux. This is exactly the shape main expects.
+function getConfig() {
+  const { config } = store.getState();
+  return {
+    hostName: config.hostName,
+    ftpPort: config.ftpPort,
+    ftpUserName: config.ftpUserName,
+    ftpPassword: config.ftpPassword
+  };
+}
+
+function bridge() {
+  return window.keypunch.jes;
+}
 
 class JES {
   constructor() {
-    this.ftp = new PromiseFtp();
-    this.connectionStatus = '';
-    //bind all the things here
     this.connect = this.connect.bind(this);
     this.disconnect = this.disconnect.bind(this);
-    this.setFiletype = this.setFiletype.bind(this);
-    this.setEncoding = this.setEncoding.bind(this);
     this.pollJobStatus = this.pollJobStatus.bind(this);
     this.submitJob = this.submitJob.bind(this);
     this.deleteJob = this.deleteJob.bind(this);
+    this.retrieveJob = this.retrieveJob.bind(this);
     this.listDatasets = this.listDatasets.bind(this);
-    this.listMembers = this.listMembers.bind(this);
     this.retrieveMember = this.retrieveMember.bind(this);
     this._errorLookup = this._errorLookup.bind(this);
-    this._sleep = this._sleep.bind(this);
   }
 
-  // Connect if not already connected
-  connect() {
-    if (this.ftp.getConnectionStatus() !== 'connected') {
-      store.dispatch(setIsConnecting(true));
-      store.dispatch(setIsConnected(false));
-      return this.ftp.connect({
-        host: store.getState().config.hostName,
-        port: store.getState().config.ftpPort,
-        user: store.getState().config.ftpUserName,
-        password: store.getState().config.ftpPassword
-      })
-        .then((msg) => console.log(msg))
-        .then(() => {
-          if (this.ftp.getConnectionStatus() === 'connected') {
-            store.dispatch(setIsConnecting(false));
-            store.dispatch(setIsConnected(true));
-          }
-        })
-        .catch(err => this._errorLookup(err))
-    } else {
-      //return promise that resolves immediately
-      return Promise.resolve("Already connected");
+  // Connect if not already connected.
+  async connect() {
+    store.dispatch(setIsConnecting(true));
+    store.dispatch(setIsConnected(false));
+    try {
+      await bridge().connect(getConfig());
+      store.dispatch(setIsConnecting(false));
+      store.dispatch(setIsConnected(true));
+    } catch (err) {
+      this._errorLookup(err);
     }
   }
 
   async disconnect() {
-    this.connectionStatus = this.ftp.getConnectionStatus();
-    console.log("Attempting to disconnect");
-    this.ftp.end()
-      .then((msg) => console.log(msg))
-      .catch(err => this._errorLookup(err))
-    // .then(async () => {
-    this.connectionStatus = this.ftp.getConnectionStatus();
-    console.log("Connection Status: ", this.connectionStatus);
-    if (this.connectionStatus === 'disconnecting') {
-      store.dispatch(setIsDisconnecting(true));
+    store.dispatch(setIsDisconnecting(true));
+    try {
+      await bridge().disconnect();
+    } catch (err) {
+      this._errorLookup(err);
     }
-    let numTries = 10;
-    while (this.connectionStatus === 'disconnecting' && numTries > 0) {
-      await this._sleep(2000);
-      this.connectionStatus = this.ftp.getConnectionStatus();
-      console.log("Connection Status: ", this.connectionStatus);
-      numTries--
-    }
-    if (numTries == 0) {
-      console.log("Failed to gracefully disconnect from the server, so forcing destroy");
-      this.ftp.destroy()
-      this.connectionStatus = this.ftp.getConnectionStatus();
-      console.log("Connection Status: ", this.connectionStatus);
-    }
-    // Clear all indicators
+    // Clear all indicators (mirrors the original behaviour).
     store.dispatch(setIsConnected(false));
     store.dispatch(setIsConnecting(false));
     store.dispatch(setIsSubmitted(false));
@@ -98,322 +88,124 @@ class JES {
     store.dispatch(setIsDisconnecting(false));
   }
 
-  setFiletype(filetype) {
-    let acceptableFileTypes = ['jes', 'seq'];
-    if (acceptableFileTypes.includes(filetype)) {
-      // if (store.getState().isConnected === false) this.connect();
-      return this.ftp.site('FILETYPE=' + filetype)
-        .then((resultsObj) => {
-          console.log("Server responded to FILETYPE=jes with " + resultsObj.code + ' ' + resultsObj.text);
-        })
-        .catch(err => this._errorLookup(err))
+  async pollJobStatus() {
+    store.dispatch(setIsSubmitting(true));
+    store.dispatch(setIsRetrieving(true));
+    store.dispatch(setIsConnecting(true));
+    try {
+      const rows = await bridge().pollJobs(getConfig());
+      store.dispatch(setIsConnecting(false));
+      store.dispatch(setIsConnected(true));
+      // parseJobs throws on an unreadable queue and returns {} for the known
+      // empty-queue informational message; both paths dispatch refreshJobs.
+      const jobs = parseJobs(rows);
+      store.dispatch(refreshJobs(jobs));
+      store.dispatch(setIsSubmitting(false));
+      store.dispatch(setIsRetrieving(false));
+    } catch (err) {
+      this._errorLookup(err);
     }
   }
 
-  setEncoding(type) {
-    let acceptableFileTypes = ['ascii'];
-    if (acceptableFileTypes.includes(type)) {
-      switch (type) {
-        case 'ascii':
-          return this.ftp.ascii()
-            .then(res => {
-              console.log(res);
-              console.log(JSON.stringify(res));
-            })
-          break;
-        default:
-          return
+  async submitJob(content) {
+    store.dispatch(setIsSubmitting(true));
+    store.dispatch(setIsRetrieving(true));
+    try {
+      await bridge().submitJob(getConfig(), content);
+      store.dispatch(setIsConnected(true));
+      store.dispatch(setIsSubmitted(true));
+      store.dispatch(setIsSubmitting(false));
+      store.dispatch(setIsRetrieving(false));
+    } catch (err) {
+      this._errorLookup(err);
+    }
+  }
+
+  async deleteJob(jobID) {
+    store.dispatch(setIsSubmitting(true));
+    store.dispatch(setIsRetrieving(true));
+    try {
+      await bridge().deleteJob(getConfig(), jobID);
+      store.dispatch(setIsSubmitting(false));
+      store.dispatch(setIsRetrieving(false));
+    } catch (err) {
+      this._errorLookup(err);
+    }
+  }
+
+  async retrieveJob(jobID) {
+    store.dispatch(setIsSubmitting(true));
+    store.dispatch(setIsRetrieving(true));
+    try {
+      const output = await bridge().retrieveJob(getConfig(), jobID);
+      store.dispatch(loadJobResults(jobID, output));
+      store.dispatch(setIsRetrieved(true));
+      store.dispatch(setIsSubmitting(false));
+      store.dispatch(setIsRetrieving(false));
+    } catch (err) {
+      this._errorLookup(err);
+    }
+  }
+
+  async listDatasets() {
+    store.dispatch(setIsSubmitting(true));
+    store.dispatch(setIsRetrieving(true));
+    store.dispatch(setIsConnecting(true));
+    try {
+      const config = getConfig();
+      const rows = await bridge().listDatasets(config);
+      store.dispatch(setIsConnecting(false));
+      store.dispatch(setIsConnected(true));
+      // parseDatasets throws on an unreadable listing and drops the header row.
+      const datasets = parseDatasets(rows);
+      // Populate the members of each dataset, exactly as the old flow did.
+      for (const dataset of datasets) {
+        const dsname = dataset.attributes.dsname;
+        try {
+          const memberRows = await bridge().listMembers(config, dsname);
+          const members = parseMembers(memberRows, dsname);
+          dataset.children.push(...members);
+        } catch (err) {
+          // An empty / unreadable PDS just yields no members.
+          console.log(err);
+        }
       }
+      store.dispatch(refreshDatasets(datasets));
+      store.dispatch(setIsRetrieved(true));
+      store.dispatch(setIsSubmitting(false));
+      store.dispatch(setIsRetrieving(false));
+    } catch (err) {
+      this._errorLookup(err);
     }
   }
 
-  // Get all JES jobs and return as an array of objects;
-
-  pollJobStatus() {
+  async retrieveMember(datasetName, memberName) {
     store.dispatch(setIsSubmitting(true));
     store.dispatch(setIsRetrieving(true));
-    this.connect()
-      .then(() => this.setEncoding('ascii'))
-      .then(() => this.setFiletype('jes'))
-      .then(() => this.ftp.list(''))
-      .then(results => {
-        console.log('Checking results of list: ', results);
-        // parseJobs throws on an unreadable queue and returns {} for the known
-        // empty-queue informational message; both cases dispatch refreshJobs
-        // and clear the flags, exactly as before.
-        const jobs = parseJobs(results);
-        store.dispatch(refreshJobs(jobs));
-        store.dispatch(setIsSubmitting(false));
-        store.dispatch(setIsRetrieving(false));
-      })
-      .catch(err => this._errorLookup(err));
+    try {
+      const content = await bridge().retrieveMember(getConfig(), datasetName, memberName);
+      store.dispatch(setExplorerContent(content));
+      store.dispatch(setIsRetrieved(true));
+      store.dispatch(setIsSubmitting(false));
+      store.dispatch(setIsRetrieving(false));
+    } catch (err) {
+      this._errorLookup(err);
+    }
   }
-
-  deleteJob(jobID) {
-    store.dispatch(setIsSubmitting(true));
-    store.dispatch(setIsRetrieving(true));
-    return this.connect()
-      .then((msg) => this.setEncoding('ascii'))
-      .then((msg) => console.log('After setting encoding to ASCII: ', msg))
-      .then((msg) => this.setFiletype('jes'))
-      .then((msg) => console.log('After setting filetype to JES: ', msg))
-      .then((msg) => this.ftp.delete(jobID))
-      .then((res) => {
-        store.dispatch(setIsSubmitting(false));
-        store.dispatch(setIsRetrieving(false));
-        console.log(`After invoking delete on ${jobID}: ${res}`)
-      })
-      .catch(err => this._errorLookup(err));
-  }
-
-  // TODO: Put returns an empty array, but we expect a string output containing job
-  // control data such as the job ID. This is probably not getting handled properly
-  // by the underlying promise-ftp library, but it's possible that I'm not using
-  // the correct command
-
-  // A job can be a buffer, a file, and others????
-  // Buffer.from(store.getState().editor.editorContent)
-  // TODO: Check and ensure JES mode and ASCII
-
-  submitJob(job) {
-    store.dispatch(setIsSubmitting(true));
-    store.dispatch(setIsRetrieving(true));
-    return this.connect()
-      .then((msg) => this.setEncoding('ascii'))
-      .then((msg) => console.log('After setting encoding to ASCII: ', msg))
-      .then((msg) => this.setFiletype('jes'))
-      .then((msg) => console.log('After setting filetype to JES: ', msg))
-      .then((msg) => this.ftp.put(job, '/'))
-      .then((res) => {
-        store.dispatch(setIsSubmitting(false));
-        store.dispatch(setIsRetrieving(false));
-        console.log(`After invoking put on ${job}: ${res}`)
-      })
-      .catch(err => this._errorLookup(err));
-  }
-
-  //The x suffix seems to be needed to retrieve a printout of the jobs output;
-  retrieveJob(jobID) {
-    store.dispatch(setIsSubmitting(true));
-    store.dispatch(setIsRetrieving(true));
-    return this.connect()
-      .then((msg) => this.setEncoding('ascii'))
-      .then((msg) => console.log('After setting encoding to ASCII: ', msg))
-      .then((msg) => this.setFiletype('jes'))
-      .then((msg) => console.log('After setting filetype to JES: ', msg))
-      .then((msg) => this.ftp.get(jobID + '.x'))
-      .then((stream) => {
-        console.log(`After invoking get on ${jobID}:`)
-        // stream.once('close', resolve);
-        // stream.once('error', reject);
-        let results = '';
-        stream.on('data', (chunk) => {
-          console.log(`Received ${results.length} bytes of data.`);
-          results += chunk.toString();
-        })
-        stream.on('end', () => {
-          console.log('final output:\n' + results)
-          store.dispatch(loadJobResults(jobID, results))
-          store.dispatch(setIsSubmitting(false));
-          store.dispatch(setIsRetrieving(false));
-        })
-      })
-      .catch(err => this._errorLookup(err));
-  }
-
-  listDatasets() {
-    store.dispatch(setIsSubmitting(true));
-    store.dispatch(setIsRetrieving(true));
-    let datasets = [];
-    return this.connect()
-      .then(() => this.setEncoding('ascii'))
-      .then(() => this.setFiletype('seq'))
-      .then(() => this.ftp.list(''))
-      .then(results => {
-        console.log('Checking results of list: ', results);
-        // parseDatasets throws on an unreadable listing and drops the header row.
-        datasets = parseDatasets(results);
-        console.log(datasets);
-      })
-      .then(() => {
-        return Promise.each(datasets, (dataset) => {
-          return this.listMembers(dataset.attributes.dsname, datasets)
-            .then(_datasets => {
-              console.log("_datasets is: ", _datasets);
-              datasets = _datasets
-            })
-        })
-      })
-      .then(() => {
-        store.dispatch(refreshDatasets(datasets));
-        store.dispatch(setIsSubmitting(false));
-        store.dispatch(setIsRetrieving(false));
-      })
-      .catch(err => this._errorLookup(err));
-  }
-
-  // This actually populates the members in each dataset
-  listMembers(dsname, datasets) {
-    store.dispatch(setIsSubmitting(true));
-    store.dispatch(setIsRetrieving(true));
-    console.log("Connection: ", this.ftp.getConnectionStatus());
-    let pwd;
-    console.log(`list the members for ${dsname}`);
-    return this.connect()
-      .then((msg) => this.setEncoding('ascii'))
-      .then((msg) => this.setFiletype('seq'))
-      .then((msg) => this.ftp.pwd())
-      .then((msg) => console.log('After pwd: ', msg))
-      .then(() => this.ftp.cwd(dsname))
-      .then((msg) => console.log('After cwd: ', msg))
-      .then(() => this.ftp.list(''))
-      .then((res) => {
-        console.log(res);
-        // parseMembers drops the header row and returns the child nodes for dsname.
-        const members = parseMembers(res, dsname);
-        const index = datasets.findIndex((dataset) => dataset.attributes.dsname == dsname);
-        datasets[index].children.push(...members);
-      })
-      .catch(err => console.log(err)) // "Error: No Members Found is returned if nothing is found"
-      // MVS treats the home directory as the high-level-qualifier set to the z/OS userid
-      .then(() => this.ftp.cwd('~'))
-      .then((msg) => {
-        console.log('After cwd: ', msg)
-        store.dispatch(setIsSubmitting(false));
-        store.dispatch(setIsRetrieving(false));
-      })
-      .catch(err => this._errorLookup(err))
-      .then(() => datasets)
-  }
-
-  retrieveMember(datasetName, memberName) {
-    store.dispatch(setIsSubmitting(true));
-    store.dispatch(setIsRetrieving(true));
-    console.log(`Retrieving member ${memberName} from dataset ${datasetName}`);
-    return this.connect()
-      .then(() => this.setEncoding('ascii'))
-      .then((msg) => console.log('After setting encoding to ASCII: ', msg))
-      .then(() => this.setFiletype('seq'))
-      .then(() => this.ftp.cwd('~'))
-      .then((msg) => console.log('After cwd: ', msg))
-      .then(() => this.ftp.cwd(datasetName))
-      .then((msg) => console.log('After cwd: ', msg))
-      .then(() => this.ftp.get(memberName))
-      .then((stream) => {
-        console.log(`After invoking get on ${memberName}:`)
-        let results = '';
-        stream.on('data', (chunk) => {
-          console.log(`Received ${results.length} bytes of data.`);
-          results += chunk.toString();
-        })
-        stream.on('end', () => {
-          console.log('final output:\n' + results);
-          store.dispatch(setExplorerContent(results));
-          store.dispatch(setIsSubmitting(false));
-          store.dispatch(setIsRetrieving(false));
-        })
-      })
-      .catch(err => this._errorLookup(err))
-      .finally(() => this.ftp.cwd('~'))
-  }
-
-  // Private Helper Functions
 
   _errorLookup(err) {
     store.dispatch(setIsSubmitting(false));
     store.dispatch(setIsRetrieving(false));
-    console.log("BUG DETECTED");
-    console.log("Connection: ", this.ftp.getConnectionStatus());
-    if (err.code) {
-      switch (err.code) {
-        case 451:
-          // alert("File Error. Do you have a valid file open in the editor?");
-          console.log(err);
-          break;
-        case 550:
-          // alert("Permission Denied (or No such file or folder):\n", err.toString());
-          console.log(err);
-          break;
-        case "Error: PASS command failed(…)":
-          // alert("What is a PASS command?");
-          break;
-        default:
-          console.log("|", err, "|");
-        // console.log(err.parse(':'));
-        // alert(JSON.stringify(err));
-      }
-    } else {
-      console.log(err.toString());
-      console.log("Just in Case: ", JSON.stringify(err));
-    }
-  }
-
-  //--------------------------------------------------------------------------------------------------
-  // _pollMostRecentJobUntilComplete
-  //     - maxRetries: The Number of times to poll job status before giving up
-  //     - timeToWait: The amount of time in ms that we should wait between retries
-  //
-  //     - RETURNS mostRecentJob
-  //
-  // Repeatedly poll job status until the most recent job has a status of output, signifying that
-  // batch processing is complete. When complete, return the status of the most recent job to
-  // allow for follow on action.
-  //
-  // TODO: Each iteration of the loop recalculates what the mostRecentJob is. This needs to target
-  // the same JES Job ID.
-  //
-  // TODO: Assuming escalated privileges on the current User ID, it is possible that the output of
-  // _pollJobStatus returns other user's jobs. Based on the workflow of this function, we should
-  // really treat the most recent job as the most recent job submitted by the user. Perhaps this
-  // should be handled in _pollJobStatus via an optional flag.
-  //
-  //--------------------------------------------------------------------------------------------------
-
-  async _pollMostRecentJobUntilComplete(maxRetries, timeToWait) {
-    console.log("Attempting to get most recent job");
-    let mostRecentJob;
-    while (!mostRecentJob || mostRecentJob.status !== 'OUTPUT' && maxRetries > 0) {
-      console.log("TriesRemaining: ", maxRetries);
-      let jobs = await this.pollJobStatus();
-      // If we don't know the most recent job, we guestimate based on the job with the highest JOB ID
-      // This should only run once, as it's possible that we submit another job while this one is processing
-      if (!mostRecentJob) {
-        const compareJobIDs = (firstJobID, secondJobID) => {
-          let firstNum = parseInt(firstJobID.substring(3));
-          let secondNum = parseInt(secondJobID.substring(3));
-          if (firstNum > secondNum) return 1;
-          if (firstNum < secondNum) return -1;
-          // Equality shouldn't be possible, but included just to prevent blow-ups
-          if (firstNum === secondNum) return 0;
-        }
-        jobIDs = Object.keys(jobs).sort(compareJobIDs);
-        mostRecentJobID = jobIDs[jobIDs.length - 1];
-        mostRecentJob = jobs(mostRecentJobID);
-      }
-      // If we're already guestimated what the most recent job is, just refresh it from the output
-      else {
-        mostRecentJob = jobs(mostRecentJob.jobID);
-      }
-      if (mostRecentJob.status === 'OUTPUT') {
-        console.log("Most recent job has status of OUTPUT, so returning");
-        return mostRecentJob;
-      }
-      sleep(timeToWait)
-      maxRetries--;
-    }
-    return mostRecentJob;
-  }
-
-  _sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    store.dispatch(setIsConnecting(false));
+    console.log('JES error:', err && err.message ? err.message : err);
   }
 }
 
 const jes = new JES();
 export default jes;
 
-// accepts 'jes'
-
-
-
-
+// react-router `onEnter` handlers in routes.js import these as named exports.
+// They were broken in the original (imported but never exported); now they are
+// real, bound functions.
+export const pollJobStatus = jes.pollJobStatus;
+export const listDatasets = jes.listDatasets;

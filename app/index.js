@@ -5,18 +5,40 @@ import { Router, hashHistory } from 'react-router';
 import { syncHistoryWithStore } from 'react-router-redux';
 import routes from './routes';
 import configureStore from './store/configureStore';
-import generateMenuTemplate from './utils/menu';
+import { openFilePicker, newFile, saveFile } from './utils/nativeDialogs';
+import jes from './utils/jesFtp';
 import './app.global.css';
-const {app, Menu} = require('electron').remote
 
-// Hack: Exporting Store to have access in nativeDialogs
+// Hack: Exporting Store to have access in nativeDialogs / jesFtp.
 export const store = configureStore();
 const history = syncHistoryWithStore(hashHistory, store);
 
-// Generate and Render the Electron Native Menus
-const template = generateMenuTemplate();
-const menu = Menu.buildFromTemplate(template)
-Menu.setApplicationMenu(menu)
+// The native application menu is built in the MAIN process now. Menu clicks for
+// editor actions arrive over IPC on the 'menu' channel; wire them to the same
+// handlers the menu used to call directly.
+if (window.keypunch && window.keypunch.onMenu) {
+  window.keypunch.onMenu((channel) => {
+    switch (channel) {
+      case 'file:new':
+        newFile();
+        break;
+      case 'file:open':
+        openFilePicker();
+        break;
+      case 'file:save':
+        saveFile(true);
+        break;
+      case 'file:saveAs':
+        saveFile(false);
+        break;
+      case 'kill-ftp':
+        jes.disconnect();
+        break;
+      default:
+        break;
+    }
+  });
+}
 
 render(
   <Provider store={store}>
