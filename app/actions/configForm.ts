@@ -3,6 +3,7 @@ import {
   SET_FTP_PORT,
   SET_FTP_USER_NAME,
   SET_FTP_PASSWORD,
+  SET_FTPS_ENABLED,
 } from '../constants';
 
 export const setHostName = (hostName: string) => ({
@@ -25,8 +26,14 @@ export const setFtpPassword = (ftpPassword: string) => ({
   ftpPassword,
 });
 
+export const setFtpsEnabled = (ftpsEnabled: boolean) => ({
+  type: SET_FTPS_ENABLED,
+  ftpsEnabled,
+});
+
 export type ConfigFormAction =
   | ReturnType<typeof setHostName>
   | ReturnType<typeof setFtpPort>
   | ReturnType<typeof setFtpUserName>
-  | ReturnType<typeof setFtpPassword>;
+  | ReturnType<typeof setFtpPassword>
+  | ReturnType<typeof setFtpsEnabled>;

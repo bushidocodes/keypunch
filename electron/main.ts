@@ -46,6 +46,11 @@ let mainWindow: BrowserWindow | null = null;
 // --------------------------------------------------------------------------
 class JES {
   private ftp: PromiseFtp;
+  // Credentials are stored here after the renderer calls jes:setCredentials.
+  // They are intentionally NOT carried in FtpConfig (the per-call IPC payload)
+  // so the password is not re-transmitted on every pollJobs / listDatasets call.
+  private _username = '';
+  private _password = '';
 
   constructor() {
     this.ftp = new PromiseFtp();
@@ -58,10 +63,14 @@ class JES {
   private async _ensureConnected(config: FtpConfig): Promise<void> {
     if (this.ftp.getConnectionStatus() === 'connected') return;
     await this.ftp.connect({
-      host: config.hostName,
-      port: config.ftpPort,
-      user: config.ftpUserName,
-      password: config.ftpPassword
+      host:     config.hostName,
+      port:     config.ftpPort,
+      user:     this._username,
+      password: this._password,
+      // `true` → explicit FTPS (AUTH TLS): the control connection is
+      // established in plaintext and then upgraded with AUTH TLS.
+      // `false` → plain FTP (default; required for z/OS servers without TLS).
+      secure: config.ftpsEnabled ? true : false,
     });
   }
 
@@ -98,6 +107,13 @@ class JES {
   // Called through the serial queue in registerIpc(); never call these
   // from within another public method (use the private helpers instead).
   // -----------------------------------------------------------------------
+
+  // Store credentials. Called by the renderer whenever the username or
+  // password field changes; must be called before the first FTP operation.
+  setCredentials(username: string, password: string): void {
+    this._username = username;
+    this._password = password;
+  }
 
   async connect(config: FtpConfig): Promise<string> {
     await this._ensureConnected(config);
@@ -324,6 +340,14 @@ function registerIpc(): void {
   );
 
   // --- JES / FTP — all wrapped through the serial queue ---
+
+  // setCredentials is synchronous on the main side and does not touch the FTP
+  // connection, so it runs outside the queue.  This also avoids a deadlock if
+  // the renderer calls setCredentials while another operation is queued.
+  ipcMain.handle('jes:setCredentials',
+    (_evt: IpcMainInvokeEvent, username: string, password: string) =>
+      jes.setCredentials(username, password));
+
   ipcMain.handle('jes:connect',
     (_evt: IpcMainInvokeEvent, config: FtpConfig) =>
       enqueue(() => jes.connect(config)));

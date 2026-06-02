@@ -24,6 +24,8 @@ const api: KeypunchApi = {
   // --- JES / FTP (all I/O runs in main; raw results come back to be parsed
   //     by the renderer's jesParse.ts) ---
   jes: {
+    setCredentials: (username, password) =>
+      ipcRenderer.invoke('jes:setCredentials', username, password),
     connect: (config) => ipcRenderer.invoke('jes:connect', config),
     disconnect: () => ipcRenderer.invoke('jes:disconnect'),
     pollJobs: (config) => ipcRenderer.invoke('jes:pollJobs', config),

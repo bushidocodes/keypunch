@@ -7,13 +7,19 @@
 // are type-checked against a single source of truth.
 
 // The FTP/JES connection config. Pulled out of redux in the renderer
-// (app/utils/jesFtp.js getConfig) and consumed by main's JES methods. Ports
+// (app/utils/jesFtp.ts getConfig) and consumed by main's JES methods. Ports
 // come from a text input, hence string.
+//
+// NOTE: ftpPassword is intentionally absent. Credentials are sent to main
+// exactly once via jes:setCredentials whenever they change, and main stores
+// them internally. This avoids re-transmitting the password on every IPC
+// call (pollJobs, listDatasetsWithMembers, etc.).
 export interface FtpConfig {
   hostName: string;
   ftpPort: string;
   ftpUserName: string;
-  ftpPassword: string;
+  /** When true the FTP control connection is upgraded to TLS (AUTH TLS / explicit FTPS). */
+  ftpsEnabled: boolean;
 }
 
 // Options for the generic yes/no confirm dialog.
@@ -45,6 +51,12 @@ export type MenuChannel =
 // All calls are serialized through a single queue in main so FTP commands
 // from concurrent renderer actions never interleave on the shared connection.
 export interface KeypunchJesApi {
+  /**
+   * Send credentials to the main process for storage.  Must be called (and
+   * awaited) before any FTP operation.  The password is NOT included in
+   * FtpConfig so it is not re-transmitted on every IPC call.
+   */
+  setCredentials(username: string, password: string): Promise<void>;
   connect(config: FtpConfig): Promise<string>;
   disconnect(): Promise<string>;
   pollJobs(config: FtpConfig): Promise<string[]>;

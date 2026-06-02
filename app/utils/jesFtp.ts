@@ -30,14 +30,16 @@ import { refreshDatasets } from '../actions/datasets';
 import { parseJobs, parseDatasets, parseMembers } from './jesParse';
 import type { FtpConfig } from '../keypunch';
 
-// Pull the FTP config out of Redux. This is exactly the shape main expects.
+// Pull the FTP config out of Redux. Password is intentionally excluded —
+// it is stored in the main process via jes:setCredentials and must not be
+// re-transmitted on every IPC call.
 function getConfig(): FtpConfig {
   const { config } = store.getState();
   return {
-    hostName: config.hostName,
-    ftpPort: config.ftpPort,
+    hostName:    config.hostName,
+    ftpPort:     config.ftpPort,
     ftpUserName: config.ftpUserName,
-    ftpPassword: config.ftpPassword,
+    ftpsEnabled: config.ftpsEnabled,
   };
 }
 

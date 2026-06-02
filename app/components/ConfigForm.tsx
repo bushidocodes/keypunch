@@ -1,5 +1,6 @@
+import { useEffect } from 'react';
 import { connect } from 'react-redux';
-import { setHostName, setFtpPort, setFtpUserName, setFtpPassword } from '../actions/configForm';
+import { setHostName, setFtpPort, setFtpUserName, setFtpPassword, setFtpsEnabled } from '../actions/configForm';
 import { setThemeDark, setThemeLight } from '../actions/uiStyle';
 import type { RootState } from '../reducers';
 import type { AppDispatch } from '../store/configureStore';
@@ -10,6 +11,7 @@ function mapStateToProps(state: RootState) {
     ftpPort:     state.config.ftpPort,
     ftpUserName: state.config.ftpUserName,
     ftpPassword: state.config.ftpPassword,
+    ftpsEnabled: state.config.ftpsEnabled,
     theme:       state.uiStyle.theme,
     color:       state.uiStyle.color,
   };
@@ -17,12 +19,13 @@ function mapStateToProps(state: RootState) {
 
 function mapDispatchToProps(dispatch: AppDispatch) {
   return {
-    setHostName:    (hostName: string)    => dispatch(setHostName(hostName)),
-    setFtpPort:     (ftpPort: string)     => dispatch(setFtpPort(ftpPort)),
-    setFtpUserName: (ftpUserName: string) => dispatch(setFtpUserName(ftpUserName)),
-    setFtpPassword: (ftpPassword: string) => dispatch(setFtpPassword(ftpPassword)),
-    setThemeDark:   ()                    => dispatch(setThemeDark()),
-    setThemeLight:  ()                    => dispatch(setThemeLight()),
+    setHostName:    (hostName: string)       => dispatch(setHostName(hostName)),
+    setFtpPort:     (ftpPort: string)        => dispatch(setFtpPort(ftpPort)),
+    setFtpUserName: (ftpUserName: string)    => dispatch(setFtpUserName(ftpUserName)),
+    setFtpPassword: (ftpPassword: string)    => dispatch(setFtpPassword(ftpPassword)),
+    setFtpsEnabled: (ftpsEnabled: boolean)   => dispatch(setFtpsEnabled(ftpsEnabled)),
+    setThemeDark:   ()                       => dispatch(setThemeDark()),
+    setThemeLight:  ()                       => dispatch(setThemeLight()),
   };
 }
 
@@ -33,6 +36,13 @@ function ConfigForm(props: Props) {
   const inputStyle = props.theme === 'dark'
     ? { background: 'black', color: 'white' }
     : { background: 'white', color: 'black' };
+
+  // Keep main-process credential store in sync whenever the username or
+  // password changes (including on initial mount so the first FTP call
+  // succeeds even if the user never changes the fields after app start).
+  useEffect(() => {
+    window.keypunch.jes.setCredentials(props.ftpUserName, props.ftpPassword);
+  }, [props.ftpUserName, props.ftpPassword]);
 
   return (
     <div className="config-form">
@@ -68,6 +78,20 @@ function ConfigForm(props: Props) {
         value={props.ftpPassword}
         onChange={(evt) => props.setFtpPassword(evt.target.value)}
       />
+      <label className="config-label" style={{ color: labelColor }}>Use FTPS (TLS)</label>
+      <label className="config-radio" style={{ color: labelColor }}>
+        <input
+          type="checkbox"
+          checked={props.ftpsEnabled}
+          onChange={(evt) => props.setFtpsEnabled(evt.target.checked)}
+        />
+        {' '}Encrypt connection with AUTH TLS
+        {props.ftpsEnabled && (
+          <span style={{ marginLeft: '6px', fontSize: '0.85em', opacity: 0.7 }}>
+            (requires TLS-enabled z/OS FTP server)
+          </span>
+        )}
+      </label>
       <label className="config-label" style={{ color: labelColor }}>Theme</label>
       <div className="config-radios">
         <label className="config-radio" style={{ color: labelColor }}>

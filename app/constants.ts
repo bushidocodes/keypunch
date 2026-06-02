@@ -3,10 +3,11 @@ export const SET_EDITOR_PATH     = 'SET_EDITOR_PATH'     as const;
 
 export const SET_EXPLORER_CONTENT = 'SET_EXPLORER_CONTENT' as const;
 
-export const SET_HOST_NAME     = 'SET_HOST_NAME'     as const;
-export const SET_FTP_PORT      = 'SET_FTP_PORT'      as const;
-export const SET_FTP_USER_NAME = 'SET_FTP_USER_NAME' as const;
-export const SET_FTP_PASSWORD  = 'SET_FTP_PASSWORD'  as const;
+export const SET_HOST_NAME      = 'SET_HOST_NAME'      as const;
+export const SET_FTP_PORT       = 'SET_FTP_PORT'       as const;
+export const SET_FTP_USER_NAME  = 'SET_FTP_USER_NAME'  as const;
+export const SET_FTP_PASSWORD   = 'SET_FTP_PASSWORD'   as const;
+export const SET_FTPS_ENABLED   = 'SET_FTPS_ENABLED'   as const;
 
 export const SET_THEME_DARK = 'SET_THEME_DARK' as const;
 export const SET_THEME_LIGHT = 'SET_THEME_LIGHT' as const;

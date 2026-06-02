@@ -13,6 +13,10 @@ declare module 'promise-ftp' {
     port?: number | string;
     user?: string;
     password?: string;
+    /** `true` → explicit FTPS (AUTH TLS); `'implicit'` → implicit FTPS (port 990).
+     *  Passed through to the underlying @icetee/ftp client. */
+    secure?: boolean | 'implicit';
+    secureOptions?: object;
   }
 
   class PromiseFtp {
