@@ -56,7 +56,7 @@ setTimeout(() => {
   if (process.platform === 'win32') {
     spawn('taskkill', ['/PID', String(child.pid), '/T', '/F']);
   } else {
-    try { process.kill(-child.pid); } catch (_) { child.kill('SIGKILL'); }
+    try { process.kill(-child.pid); } catch { child.kill('SIGKILL'); }
   }
   setTimeout(() => process.exit(0), 1500);
 }, UPTIME_MS);

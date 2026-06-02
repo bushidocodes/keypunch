@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function renderIcon(name, theme) {
   const fill = theme === 'light' ? '#ffffff' : '#000000';
   const stroke = theme === 'light' ? '#000000' : '#ffffff';
@@ -44,7 +42,7 @@ export function renderIcon(name, theme) {
       );
     case 'help':
       return (
-        <svg class="nav-icon" x="0px" y="0px" viewBox="0 0 52 52" width="40px" height="36px">
+        <svg className="nav-icon" x="0px" y="0px" viewBox="0 0 52 52" width="40px" height="36px">
           <g>
             <path d="M26,0C11.663,0,0,11.663,0,26s11.663,26,26,26s26-11.663,26-26S40.337,0,26,0z M26,50C12.767,50,2,39.233,2,26   S12.767,2,26,2s24,10.767,24,24S39.233,50,26,50z" fill={stroke} />
             <path d="M26,37c-0.553,0-1,0.447-1,1v2c0,0.553,0.447,1,1,1s1-0.447,1-1v-2C27,37.447,26.553,37,26,37z" fill={stroke} />

@@ -12,7 +12,7 @@ export function setThemeLight () {
 }
 export function setColor (color) {
   return {
-    type: SET_THEME_DARK,
+    type: SET_COLOR,
     color
   };
 }

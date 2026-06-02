@@ -61,14 +61,14 @@ export function createMockJesServer() {
         try {
           await handle(line);
         } catch (e) {
-          try { send('451 ' + e.message); } catch (_) {}
+          try { send('451 ' + e.message); } catch { /* socket already closed */ }
         }
       }
       processing = false;
     }
 
     function openPasv() {
-      if (conn.dataServer) { try { conn.dataServer.close(); } catch (_) {} }
+      if (conn.dataServer) { try { conn.dataServer.close(); } catch { /* already closed */ } }
       const dataServer = net.createServer();
       conn.dataServer = dataServer;
       conn.dataSocketPromise = new Promise((resolve) => {

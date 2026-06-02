@@ -92,7 +92,11 @@ To package apps with options:
 $ npm run package -- --[option]
 ```
 
-## Tests
+## Tests & lint
+
+```bash
+npm run lint        # ESLint (flat config) over app/ + electron/ + harness/
+```
 
 The [verification harness](harness/) (separate workspace, runs on modern Node) holds the
 unit/integration tests and the Playwright GUI e2e:
@@ -102,6 +106,9 @@ cd harness && npm install
 npm test           # vitest: jesParse + reducer unit tests, mock FTP/JES round-trip
 npm run e2e        # Playwright _electron GUI journey against the built app + mock server
 ```
+
+CI (`.github/workflows/ci.yml`) runs all of these on every push/PR: **lint**, **harness
+tests**, the **electron-vite build**, and the **e2e under xvfb**.
 
 ## Built with
 * [electron-vite](https://electron-vite.org/) + [Vite](https://vite.dev/)

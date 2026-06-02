@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 
 class Indicator extends Component {
   constructor(props) {
@@ -23,7 +23,7 @@ class Indicator extends Component {
     }
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({ ...nextProps },
       () => {
         if (this.state.isBlinking && !this.state.blinkingInterval) {
