@@ -1,6 +1,6 @@
 export function renderIcon(name, theme) {
   const fill = theme === 'light' ? '#ffffff' : '#000000';
-  const stroke = theme === 'light' ? '#000000' : '#ffffff';
+  const stroke = theme === 'light' ? '#666666' : '#ffffff';
   const grayscale = theme === 'dark' ? '#ffffff' : '#ddd';
   switch (name) {
     case 'punchCard':
