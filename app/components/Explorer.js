@@ -1,221 +1,95 @@
-import React from 'react';
-import { Treebeard } from 'react-treebeard';
-import { View } from 'react-desktop/windows';
-import 'brace/mode/java';
-import 'brace/theme/github';
-import 'brace/theme/twilight';
-import Editor from 'react-ace';
+import React, { useEffect, useState } from 'react';
+import AceEditor from 'react-ace';
+import 'ace-builds/src-noconflict/mode-java';
+import 'ace-builds/src-noconflict/theme-github';
+import 'ace-builds/src-noconflict/theme-twilight';
 import { connect } from 'react-redux';
-import jesFtp from '../utils/jesFtp';
-import { setEditorContent } from '../actions/editor';
+import jesFtp, { listDatasets } from '../utils/jesFtp';
 
-const lightTree = {
-  tree: {
-    base: {
-      listStyle: 'none',
-      backgroundColor: '#F3F3F3',
-      margin: 0,
-      padding: 0,
-      color: '#000000',
-      fontFamily: 'lucida grande ,tahoma,verdana,arial,sans-serif',
-      fontSize: '14px'
-    },
-    node: {
-      base: {
-        position: 'relative'
-      },
-      link: {
-        cursor: 'pointer',
-        position: 'relative',
-        padding: '0px 5px',
-        display: 'block'
-      },
-      activeLink: {
-        background: '#ffffff'
-      },
-      toggle: {
-        base: {
-          position: 'relative',
-          display: 'inline-block',
-          verticalAlign: 'top',
-          marginLeft: '-5px',
-          height: '24px',
-          width: '24px'
-        },
-        wrapper: {
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          margin: '-7px 0 0 -7px',
-          height: '14px'
-        },
-        height: 14,
-        width: 14,
-        arrow: {
-          fill: '#000000',
-          strokeWidth: 0
-        }
-      },
-      header: {
-        base: {
-          display: 'inline-block',
-          verticalAlign: 'top',
-          color: '#000000'
-        },
-        connector: {
-          width: '2px',
-          height: '12px',
-          borderLeft: 'solid 2px white',
-          borderBottom: 'solid 2px white',
-          position: 'absolute',
-          top: '0px',
-          left: '-21px'
-        },
-        title: {
-          lineHeight: '24px',
-          verticalAlign: 'middle'
-        }
-      },
-      subtree: {
-        listStyle: 'none',
-        paddingLeft: '19px'
-      },
-      loading: {
-        color: '#E2C089'
-      }
-    }
-  }
-};
+// Minimal custom collapsible tree (replaces react-treebeard, which is
+// unmaintained and React-18-incompatible). It preserves the data shape produced
+// by parseDatasets/parseMembers: an array of dataset nodes, each with a
+// `.children` array of member nodes. Datasets toggle open/closed; clicking a
+// member (a leaf node, no `children`) retrieves it into the editor.
+function DatasetTree({ datasets, onSelectMember }) {
+  // Track which dataset names are expanded.
+  const [expanded, setExpanded] = useState({});
 
-const darkTree = {
-  tree: {
-    base: {
-      listStyle: 'none',
-      backgroundColor: '#21252B',
-      margin: 0,
-      padding: 0,
-      color: '#9DA5AB',
-      fontFamily: 'lucida grande ,tahoma,verdana,arial,sans-serif',
-      fontSize: '14px'
-    },
-    node: {
-      base: {
-        position: 'relative'
-      },
-      link: {
-        cursor: 'pointer',
-        position: 'relative',
-        padding: '0px 5px',
-        display: 'block'
-      },
-      activeLink: {
-        background: '#31363F'
-      },
-      toggle: {
-        base: {
-          position: 'relative',
-          display: 'inline-block',
-          verticalAlign: 'top',
-          marginLeft: '-5px',
-          height: '24px',
-          width: '24px'
-        },
-        wrapper: {
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          margin: '-7px 0 0 -7px',
-          height: '14px'
-        },
-        height: 14,
-        width: 14,
-        arrow: {
-          fill: '#9DA5AB',
-          strokeWidth: 0
-        }
-      },
-      header: {
-        base: {
-          display: 'inline-block',
-          verticalAlign: 'top',
-          color: '#9DA5AB'
-        },
-        connector: {
-          width: '2px',
-          height: '12px',
-          borderLeft: 'solid 2px black',
-          borderBottom: 'solid 2px black',
-          position: 'absolute',
-          top: '0px',
-          left: '-21px'
-        },
-        title: {
-          lineHeight: '24px',
-          verticalAlign: 'middle'
-        }
-      },
-      subtree: {
-        listStyle: 'none',
-        paddingLeft: '19px'
-      },
-      loading: {
-        color: '#E2C089'
-      }
-    }
-  }
-};
+  const toggle = (name) =>
+    setExpanded((prev) => ({ ...prev, [name]: !prev[name] }));
 
-class Explorer extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {};
-    this.onToggle = this.onToggle.bind(this);
-  }
-  onToggle(node, toggled) {
-    console.log(`called onToggle on ${JSON.stringify(node)} with ${toggled}`)
-    if (this.state.cursor) { this.state.cursor.active = false; }
-    node.active = true;
-    if (node.children) { node.toggled = toggled; }
-    this.setState({ cursor: node });
-    // Is this node a member?
-    // Should not have a children attribute... needs to be enhanced to open things other than members in PDS
-    if (!node.children) {
-      console.log(`${node.name} is a member in ${node.attributes.dsname}`);
-      jesFtp.retrieveMember(node.attributes.dsname, node.name);
-    } else {
-      console.log(`${node.name} is dataset`);
-    }
-  }
-  render() {
-    return (
-      <View
-        width="100%"
-        height="100%"
-      >
-        <Treebeard
-          style={this.props.theme === 'dark' ? darkTree : lightTree}
-          data={this.props.datasets}
-          onToggle={this.onToggle}
-        />
-        <Editor
+  const nodes = Array.isArray(datasets) ? datasets : [];
+
+  return (
+    <ul className="tree">
+      {nodes.map((dataset) => {
+        const isOpen = !!expanded[dataset.name];
+        const members = dataset.children || [];
+        return (
+          <li key={dataset.name} className="tree-dataset">
+            <div
+              className="tree-node tree-node-dataset"
+              onClick={() => toggle(dataset.name)}
+            >
+              <span className="tree-toggle">{isOpen ? '▾' : '▸'}</span>
+              <span className="tree-label">{dataset.name}</span>
+            </div>
+            {isOpen && (
+              <ul className="tree-members">
+                {members.map((member) => (
+                  <li key={member.name}>
+                    <div
+                      className="tree-node tree-node-member"
+                      onClick={() => onSelectMember(member)}
+                    >
+                      <span className="tree-label">{member.name}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function Explorer(props) {
+  // Old react-router v3 `onEnter={listDatasets}` -> run once on mount.
+  useEffect(() => {
+    listDatasets();
+  }, []);
+
+  const onSelectMember = (member) => {
+    // Members are leaf nodes (no `children`); retrieve into the editor pane.
+    jesFtp.retrieveMember(member.attributes.dsname, member.name);
+  };
+
+  return (
+    <div className="explorer">
+      <div className="explorer-tree">
+        <DatasetTree datasets={props.datasets} onSelectMember={onSelectMember} />
+      </div>
+      <div className="explorer-editor">
+        <AceEditor
           mode="java"
-          theme={this.props.theme === 'dark' ? 'twilight' : 'github'}
-          name="EDITOR" //TODO: Change this to a generated value when we add multiple editors
+          theme={props.theme === 'dark' ? 'twilight' : 'github'}
+          name="EXPLORER" // TODO: Change this to a generated value when we add multiple editors
           readOnly
           editorProps={{
             $blockScrolling: Infinity,
             readOnly: true
           }}
-          value={this.props.explorerContent}
+          value={props.explorerContent}
           width="100%"
           height="100%"
           fontSize={20}
         />
-      </View>
-    );
-  }
+      </div>
+    </div>
+  );
 }
-
 
 function mapStateToProps(state) {
   return {

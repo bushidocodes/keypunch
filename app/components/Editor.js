@@ -1,9 +1,8 @@
-import brace from 'brace'; // This is needed
-import 'brace/mode/java';
-import 'brace/theme/github';
-import 'brace/theme/twilight';
-import AceEditor from 'react-ace';
 import React from 'react';
+import AceEditor from 'react-ace';
+import 'ace-builds/src-noconflict/mode-java';
+import 'ace-builds/src-noconflict/theme-github';
+import 'ace-builds/src-noconflict/theme-twilight';
 import { connect } from 'react-redux';
 import { setEditorContent } from '../actions/editor';
 

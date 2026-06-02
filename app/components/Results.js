@@ -1,87 +1,100 @@
-import React from 'react';
-import 'brace/mode/java';
-import 'brace/theme/github';
-import 'brace/theme/twilight';
-import Editor from 'react-ace';
+import React, { useEffect, useState } from 'react';
+import AceEditor from 'react-ace';
+import 'ace-builds/src-noconflict/mode-java';
+import 'ace-builds/src-noconflict/theme-github';
+import 'ace-builds/src-noconflict/theme-twilight';
 import { connect } from 'react-redux';
-import {
-  View,
-  MasterDetailsView,
-  MasterDetailsViewItem,
-  MasterDetailsViewItemMaster,
-  MasterDetailsViewItemDetails,
-  Text,
-  Button
-} from 'react-desktop/windows';
-import jes from '../utils/jesFtp';
+import jes, { pollJobStatus } from '../utils/jesFtp';
 
+// Plain two-pane list + detail layout (replaces react-desktop's
+// MasterDetailsView, whose React-15 reconciliation threw error #120 when the
+// job list grew). The left pane lists the JES queue; selecting a job shows its
+// properties (or downloaded output) in the right pane.
+function Results(props) {
+  // Old react-router v3 `onEnter={pollJobStatus}` -> run once on mount.
+  useEffect(() => {
+    pollJobStatus();
+  }, []);
 
-function Results(props) { // props is now from MY POV
   const jobIDs = Object.keys(props.jobs);
-  return (
+  const [selectedJobID, setSelectedJobID] = useState(null);
 
-    <View
-      color={props.color}
-      theme={props.theme}
-      // layout='vertical'
-      // horizontalAlignment='center'
-      width="100%"
-      height="100%"
-    >
-      {(jobIDs.length > 0) ?
-        <MasterDetailsView width='100%' color={props.color} theme={props.theme}>
-          {jobIDs.map(jobID =>
-            <MasterDetailsViewItem theme={props.theme} key={jobID} >
-              <MasterDetailsViewItemMaster theme={props.theme}>
-                {jobID}
-              </MasterDetailsViewItemMaster>
-              {props.jobs[jobID].results ?
-                <MasterDetailsViewItemDetails background theme={props.theme}>
-                  <Editor
-                    mode="java"
-                    theme={props.theme === 'dark' ? 'twilight' : 'github'}
-                    name="RESULTS2" // TODO: Change this to a generated value when we add multiple editors
-                    value={props.jobs[jobID].results}
-                    readOnly
-                    editorProps={{
-                      $blockScrolling: Infinity,
-                      readOnly: true
-                    }}
-                    width="100%"
-                    height="95vh"
-                    fontSize={20}
-                  />
-                </MasterDetailsViewItemDetails>
-                :
-                <MasterDetailsViewItemDetails background theme={props.theme} style={{ flexFlow: 'column' }}>
-                  <Text padding="20px" color={props.theme === 'dark' ? 'white' : 'black'} >Job ID: {jobID}</Text>
-                  <Text padding="20px" color={props.theme === 'dark' ? 'white' : 'black'} >Owner: {props.jobs[jobID].owner}</Text>
-                  <Text padding="20px" color={props.theme === 'dark' ? 'white' : 'black'} >Status: {props.jobs[jobID].status}</Text>
-                  <Text padding="20px" color={props.theme === 'dark' ? 'white' : 'black'} ># Files: {props.jobs[jobID].numberOfSpoolFiles}</Text>
-                  <Button push color="red" onClick={() => props.deleteJob(jobID)}>
-                    Delete
-              </Button>
-                  {(props.jobs[jobID].numberOfSpoolFiles > 0) ?
-                    <Button
-                      push
-                      color="green"
-                      onClick={() => { props.retrieveJob(jobID); }}
-                    >
-                      Download
-                    </Button>
-                    : ''}
-                </MasterDetailsViewItemDetails>
-              }
-            </MasterDetailsViewItem>)}
-        </MasterDetailsView>
-        // Nested Ternary. Check it we are connected.
-        : (props.isConnected) ?
-          // If we are, display that the queue is empty.
-          <Text color="white">Connected, but the Mainframe queue is empty</Text> :
-          // Otherwise, display the connect and refresh message.
-          <Text color="white">Connect and Refresh to see results!</Text>
-      }
-    </View>
+  // Resolve the currently-shown job: the selection if it still exists,
+  // otherwise the first job in the queue.
+  const activeJobID =
+    selectedJobID && props.jobs[selectedJobID]
+      ? selectedJobID
+      : (jobIDs.length > 0 ? jobIDs[0] : null);
+
+  if (jobIDs.length === 0) {
+    return (
+      <div className="results">
+        {props.isConnected
+          ? <p className="results-empty">Connected, but the Mainframe queue is empty</p>
+          : <p className="results-empty">Connect and Refresh to see results!</p>}
+      </div>
+    );
+  }
+
+  const activeJob = activeJobID ? props.jobs[activeJobID] : null;
+
+  return (
+    <div className="results">
+      <ul className="results-list">
+        {jobIDs.map((jobID) => (
+          <li
+            key={jobID}
+            className={
+              jobID === activeJobID
+                ? 'results-list-item results-list-item-active'
+                : 'results-list-item'
+            }
+            onClick={() => setSelectedJobID(jobID)}
+          >
+            {jobID}
+          </li>
+        ))}
+      </ul>
+      <div className="results-detail">
+        {activeJob && activeJob.results ? (
+          <AceEditor
+            mode="java"
+            theme={props.theme === 'dark' ? 'twilight' : 'github'}
+            name="RESULTS" // TODO: Change this to a generated value when we add multiple editors
+            value={activeJob.results}
+            readOnly
+            editorProps={{
+              $blockScrolling: Infinity,
+              readOnly: true
+            }}
+            width="100%"
+            height="100%"
+            fontSize={20}
+          />
+        ) : activeJob ? (
+          <div className="results-properties">
+            <p>Job ID: {activeJob.jobID}</p>
+            <p>Owner: {activeJob.owner}</p>
+            <p>Status: {activeJob.status}</p>
+            <p># Files: {activeJob.numberOfSpoolFiles}</p>
+            <button
+              className="results-btn results-btn-delete"
+              onClick={() => props.deleteJob(activeJobID)}
+            >
+              Delete
+            </button>
+            {activeJob.numberOfSpoolFiles > 0 ? (
+              <button
+                className="results-btn results-btn-download"
+                onClick={() => props.retrieveJob(activeJobID)}
+              >
+                Download
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

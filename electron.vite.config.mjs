@@ -1,39 +1,22 @@
 import { resolve } from 'path';
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
-import { transform } from 'esbuild';
+import react from '@vitejs/plugin-react';
 
 const appDir = resolve(__dirname, 'app');
 
-// JSX lives inside plain `.js` files and the app is on React 15 (classic
-// runtime). We transform every `.js`/`.jsx` file under `app/` through esbuild's
-// JSX loader, emitting `React.createElement` calls. A dedicated plugin (rather
-// than Vite's top-level `esbuild.include`) makes this robust to Windows path
-// separators and guarantees the transform runs before Rollup parses the entry.
+// The renderer is React 18 with JSX living inside plain `.js` files.
 //
-// We deliberately do NOT use @vitejs/plugin-react: its Fast Refresh requires
-// React >= 16.9 and would break on React 15.
-function reactClassicJsx() {
-  const normalize = (id) => id.split('?')[0].replace(/\\/g, '/');
-  const appDirPosix = appDir.replace(/\\/g, '/');
-  return {
-    name: 'keypunch:react15-classic-jsx',
-    enforce: 'pre',
-    async transform(code, id) {
-      const file = normalize(id);
-      if (!file.startsWith(appDirPosix)) return null;
-      if (!/\.jsx?$/.test(file)) return null;
-      const result = await transform(code, {
-        loader: 'jsx',
-        jsx: 'transform',
-        jsxFactory: 'React.createElement',
-        jsxFragment: 'React.Fragment',
-        sourcemap: true,
-        sourcefile: id
-      });
-      return { code: result.code, map: result.map };
-    }
-  };
-}
+// @vitejs/plugin-react gives us React Fast Refresh in dev (its Babel pass also
+// matches `.js` because its default include is /\.[tj]sx?$/). The actual JSX ->
+// React.jsx() transform, however, is performed by Vite's esbuild, which only
+// treats `.jsx`/`.tsx` as JSX by default. So we tell esbuild to load the app's
+// `.js` files with the `jsx` loader. esbuild's `include`/`exclude` here is
+// independent of plugin-react's Fast-Refresh `include`.
+const esbuildJsxForJs = {
+  loader: 'jsx',
+  include: /app[\\/].*\.js$/,
+  exclude: []
+};
 
 export default defineConfig({
   main: {
@@ -65,21 +48,20 @@ export default defineConfig({
   },
   renderer: {
     root: appDir,
-    plugins: [reactClassicJsx()],
+    plugins: [
+      react({
+        include: /\.(jsx?|tsx?)$/
+      })
+    ],
+    esbuild: esbuildJsxForJs,
+    optimizeDeps: {
+      esbuildOptions: {
+        loader: { '.js': 'jsx' }
+      }
+    },
     build: {
       rollupOptions: {
         input: resolve(__dirname, 'app/index.html')
-      }
-    },
-    // Disable Vite's own esbuild JSX handling so it doesn't double-process /
-    // conflict with our plugin.
-    esbuild: false,
-    optimizeDeps: {
-      esbuildOptions: {
-        loader: { '.js': 'jsx' },
-        jsx: 'transform',
-        jsxFactory: 'React.createElement',
-        jsxFragment: 'React.Fragment'
       }
     }
   }
