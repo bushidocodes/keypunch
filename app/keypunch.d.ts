@@ -41,6 +41,9 @@ export type MenuChannel =
 // The JES/FTP slice of the API. Each call does the FULL FTP command chain in
 // main and returns RAW results (LIST -> string[], RETR -> string) or rejects;
 // parsing happens in the renderer (app/utils/jesParse.ts).
+//
+// All calls are serialized through a single queue in main so FTP commands
+// from concurrent renderer actions never interleave on the shared connection.
 export interface KeypunchJesApi {
   connect(config: FtpConfig): Promise<string>;
   disconnect(): Promise<string>;
@@ -51,6 +54,15 @@ export interface KeypunchJesApi {
   listDatasets(config: FtpConfig): Promise<string[]>;
   listMembers(config: FtpConfig, dsname: string): Promise<string[]>;
   retrieveMember(config: FtpConfig, dsname: string, member: string): Promise<string>;
+  /**
+   * Atomic compound operation: lists all datasets and all their members in a
+   * single IPC call so concurrent operations (e.g. pollJobStatus) cannot
+   * interleave FTP commands between individual listMembers calls.
+   */
+  listDatasetsWithMembers(config: FtpConfig): Promise<{
+    datasetRows: string[];
+    memberRowsByDs: Record<string, string[]>;
+  }>;
 }
 
 // The full `window.keypunch` surface.

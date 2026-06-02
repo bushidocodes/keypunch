@@ -33,7 +33,9 @@ const api: KeypunchApi = {
     listDatasets: (config) => ipcRenderer.invoke('jes:listDatasets', config),
     listMembers: (config, dsname) => ipcRenderer.invoke('jes:listMembers', config, dsname),
     retrieveMember: (config, dsname, member) =>
-      ipcRenderer.invoke('jes:retrieveMember', config, dsname, member)
+      ipcRenderer.invoke('jes:retrieveMember', config, dsname, member),
+    listDatasetsWithMembers: (config) =>
+      ipcRenderer.invoke('jes:listDatasetsWithMembers', config)
   },
 
   // --- main -> renderer menu events ---
