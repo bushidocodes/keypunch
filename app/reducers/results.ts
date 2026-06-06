@@ -10,6 +10,7 @@ import {
   SET_IS_RETRIEVING,
   SET_IS_DISCONNECTED,
   SET_IS_DISCONNECTING,
+  SET_ERROR_MESSAGE,
 } from '../constants';
 import type { ResultsAction } from '../actions/results';
 
@@ -26,6 +27,8 @@ export interface ResultsState {
   isRetrieving: boolean;
   isDisconnected: boolean;
   isDisconnecting: boolean;
+  /** Non-empty when a JES/FTP operation failed; displayed in the status bar. */
+  errorMessage: string;
 }
 
 const initialResultsState: ResultsState = {
@@ -40,6 +43,7 @@ const initialResultsState: ResultsState = {
   isRetrieving: false,
   isDisconnected: false,
   isDisconnecting: false,
+  errorMessage: '',
 };
 
 export default function results(
@@ -60,6 +64,7 @@ export default function results(
     case SET_IS_RETRIEVING:     newState.isRetrieving     = action.isRetrieving;    break;
     case SET_IS_DISCONNECTED:   newState.isDisconnected   = action.isDisconnected;  break;
     case SET_IS_DISCONNECTING:  newState.isDisconnecting  = action.isDisconnecting; break;
+    case SET_ERROR_MESSAGE:     newState.errorMessage     = action.errorMessage;    break;
     default:
       return state;
   }

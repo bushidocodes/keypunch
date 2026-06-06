@@ -1,5 +1,5 @@
 import AceEditor from 'react-ace';
-import 'ace-builds/src-noconflict/mode-java';
+import 'ace-builds/src-noconflict/mode-cobol';
 import 'ace-builds/src-noconflict/theme-github';
 import 'ace-builds/src-noconflict/theme-twilight';
 import { connect } from 'react-redux';
@@ -11,7 +11,6 @@ function mapStateToProps(state: RootState) {
   return {
     editorContent: state.editor.editorContent,
     theme:         state.uiStyle.theme,
-    color:         state.uiStyle.color,
   };
 }
 
@@ -26,11 +25,10 @@ type Props = ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchT
 function Editor(props: Props) {
   return (
     <AceEditor
-      mode="java"
+      mode="cobol"
       theme={props.theme === 'dark' ? 'twilight' : 'github'}
       onChange={props.setEditorContent}
       name="EDITOR" // TODO: Change this to a generated value when we add multiple editors
-      editorProps={{ $blockScrolling: Infinity }}
       value={props.editorContent}
       width="100%"
       height="100%"

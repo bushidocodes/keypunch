@@ -13,7 +13,6 @@ function mapStateToProps(state: RootState) {
     ftpPassword: state.config.ftpPassword,
     ftpsEnabled: state.config.ftpsEnabled,
     theme:       state.uiStyle.theme,
-    color:       state.uiStyle.color,
   };
 }
 

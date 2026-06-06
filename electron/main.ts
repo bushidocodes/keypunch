@@ -444,7 +444,7 @@ function buildMenu(): void {
       submenu: [
         {
           label: 'View on GitHub',
-          click: () => shell.openExternal('https://github.com/bushidocodes/keypunch-old')
+          click: () => shell.openExternal('https://github.com/bushidocodes/keypunch')
         },
         {
           // The renderer's 'kill-ftp' handler calls window.keypunch.jes.disconnect()
@@ -497,7 +497,7 @@ function createWindow(): void {
       preload: path.join(__dirname, '../preload/preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
+      sandbox: true
     }
   });
 

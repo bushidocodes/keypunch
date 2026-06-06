@@ -1,0 +1,34 @@
+import { describe, it, expect } from 'vitest';
+import reducer from '../../app/reducers/editor.ts';
+import { setEditorContent, setEditorPath } from '../../app/actions/editor.ts';
+
+describe('editor reducer', () => {
+  it('has the expected initial state', () => {
+    const state = reducer(undefined, { type: '@@INIT' });
+    expect(state).toEqual({ editorContent: '', editorPath: '' });
+  });
+
+  it('sets editorContent without mutating prior state', () => {
+    const start = reducer(undefined, { type: '@@INIT' });
+    const next = reducer(start, setEditorContent('IDENTIFICATION DIVISION.'));
+    expect(next.editorContent).toBe('IDENTIFICATION DIVISION.');
+    expect(start.editorContent).toBe('');
+  });
+
+  it('sets editorPath', () => {
+    const state = reducer(undefined, setEditorPath('/home/user/program.cbl'));
+    expect(state.editorPath).toBe('/home/user/program.cbl');
+  });
+
+  it('updates content while preserving path', () => {
+    let state = reducer(undefined, setEditorPath('/foo.cbl'));
+    state = reducer(state, setEditorContent('PROGRAM-ID. HELLO.'));
+    expect(state.editorPath).toBe('/foo.cbl');
+    expect(state.editorContent).toBe('PROGRAM-ID. HELLO.');
+  });
+
+  it('returns the same state reference for unknown actions', () => {
+    const state = reducer(undefined, { type: '@@INIT' });
+    expect(reducer(state, { type: 'NOT_A_REAL_ACTION' })).toBe(state);
+  });
+});

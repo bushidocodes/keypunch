@@ -16,7 +16,6 @@ const NAV_ITEMS = [
 function mapStateToProps(state: RootState) {
   return {
     theme: state.uiStyle.theme,
-    color: state.uiStyle.color,
   };
 }
 
