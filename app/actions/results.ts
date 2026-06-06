@@ -10,6 +10,7 @@ import {
   SET_IS_RETRIEVING,
   SET_IS_DISCONNECTED,
   SET_IS_DISCONNECTING,
+  SET_ERROR_MESSAGE,
 } from '../constants';
 
 export const setResultsContent  = (resultsContent: string)   => ({ type: SET_RESULTS_CONTENT,  resultsContent });
@@ -23,6 +24,7 @@ export const setIsRetrieved     = (isRetrieved: boolean)      => ({ type: SET_IS
 export const setIsRetrieving    = (isRetrieving: boolean)     => ({ type: SET_IS_RETRIEVING,    isRetrieving });
 export const setIsDisconnected  = (isDisconnected: boolean)   => ({ type: SET_IS_DISCONNECTED,  isDisconnected });
 export const setIsDisconnecting = (isDisconnecting: boolean)  => ({ type: SET_IS_DISCONNECTING, isDisconnecting });
+export const setErrorMessage    = (errorMessage: string)      => ({ type: SET_ERROR_MESSAGE,    errorMessage });
 
 export type ResultsAction =
   | ReturnType<typeof setResultsContent>
@@ -35,4 +37,5 @@ export type ResultsAction =
   | ReturnType<typeof setIsRetrieved>
   | ReturnType<typeof setIsRetrieving>
   | ReturnType<typeof setIsDisconnected>
-  | ReturnType<typeof setIsDisconnecting>;
+  | ReturnType<typeof setIsDisconnecting>
+  | ReturnType<typeof setErrorMessage>;

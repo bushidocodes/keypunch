@@ -23,6 +23,7 @@ import {
   setIsRetrieving,
   setIsDisconnected,
   setIsDisconnecting,
+  setErrorMessage,
 } from '../actions/results';
 import { refreshJobs, loadJobResults } from '../actions/jobs';
 import { setExplorerContent } from '../actions/explorer';
@@ -197,7 +198,7 @@ class JES {
     store.dispatch(setIsRetrieving(false));
     store.dispatch(setIsConnecting(false));
     const message = err instanceof Error ? err.message : String(err);
-    console.log('JES error:', message);
+    store.dispatch(setErrorMessage(`JES error: ${message}`));
   }
 }
 

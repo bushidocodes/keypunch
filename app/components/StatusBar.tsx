@@ -16,6 +16,7 @@ function mapStateToProps(state: RootState) {
     isRetrieving:   state.results.isRetrieving,
     isDisconnected: state.results.isDisconnected,
     isDisconnecting: state.results.isDisconnecting,
+    errorMessage:   state.results.errorMessage,
   };
 }
 
@@ -47,39 +48,17 @@ type Props = ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchT
 
 function StatusBar(props: Props) {
   return (
-    <div
-      className="status-bar"
-      style={{
-        bottom: '0',
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        zIndex: '10',
-        background: '#aaa',
-        width: '100%',
-        height: '50px',
-        overflow: 'hidden',
-      }}
-    >
-      <button
-        style={{ backgroundColor: 'orange', border: 'none', color: 'white', margin: '4px', width: '90px' }}
-        onClick={props.testIndicators}
-      >
+    <div className="status-bar">
+      <button className="btn-test" onClick={props.testIndicators}>
         TEST
       </button>
 
       {!props.isConnected ? (
-        <button
-          style={{ backgroundColor: 'green', border: 'none', color: 'white', margin: '4px', width: '90px' }}
-          onClick={props.jesConnect}
-        >
+        <button className="btn-connect" onClick={props.jesConnect}>
           CONNECT
         </button>
       ) : (
-        <button
-          style={{ backgroundColor: '#C0101D', border: 'none', color: 'white', margin: '4px', width: '90px' }}
-          onClick={props.disconnect}
-        >
+        <button className="btn-interrupt" onClick={props.disconnect}>
           INTERRUPT
         </button>
       )}
@@ -92,32 +71,23 @@ function StatusBar(props: Props) {
           [props.isDisconnected, props.isDisconnecting],
         ][i];
         return (
-          <div
-            key={label}
-            style={{ fontSize: '10px', marginTop: '8px', marginLeft: '10px', color: 'black', width: '30px' }}
-          >
+          <div key={label} className="indicator-cell">
             {label}
             <br />
-            <div style={{ marginLeft: '9px', marginTop: '3px' }}>
+            <div className="indicator-light">
               <Indicator isLit={isLit} isBlinking={isBlinking} />
             </div>
           </div>
         );
       })}
 
-      <button
-        style={{
-          backgroundColor: '#195DAE',
-          border: 'none',
-          color: 'white',
-          margin: '4px',
-          marginLeft: '10px',
-          width: '90px',
-        }}
-        onClick={props.submitJob}
-      >
+      <button className="btn-load" onClick={props.submitJob}>
         LOAD
       </button>
+
+      {props.errorMessage && (
+        <span className="status-bar-error">{props.errorMessage}</span>
+      )}
     </div>
   );
 }

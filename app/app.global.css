@@ -1,5 +1,3 @@
-@import "font-awesome/css/font-awesome.css";
-
 body {
   position: relative;
   color: white;
@@ -130,6 +128,62 @@ a:hover {
 /* ------------------------------------------------------------------ */
 .status-bar {
   flex: 0 0 50px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 50px;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.theme-dark .status-bar {
+  background: #3a3f4b;
+}
+
+.theme-light .status-bar {
+  background: #d0d0d0;
+}
+
+.status-bar button {
+  border: none;
+  color: white;
+  margin: 4px;
+  width: 90px;
+  height: 36px;
+  cursor: pointer;
+}
+
+.status-bar .btn-test       { background-color: #b06000; }
+.status-bar .btn-connect    { background-color: #2a7a2a; }
+.status-bar .btn-interrupt  { background-color: #C0101D; }
+.status-bar .btn-load       { background-color: #195DAE; }
+
+.status-bar .indicator-cell {
+  font-size: 10px;
+  margin-top: 8px;
+  margin-left: 10px;
+  width: 30px;
+  text-align: center;
+}
+
+.theme-dark  .status-bar .indicator-cell { color: #e0e0e0; }
+.theme-light .status-bar .indicator-cell { color: #222222; }
+
+.status-bar .indicator-light {
+  margin-left: 9px;
+  margin-top: 3px;
+}
+
+.status-bar-error {
+  margin-left: 12px;
+  font-size: 11px;
+  color: #ff6b6b;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ------------------------------------------------------------------ */

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import AceEditor from 'react-ace';
-import 'ace-builds/src-noconflict/mode-java';
+import 'ace-builds/src-noconflict/mode-cobol';
 import 'ace-builds/src-noconflict/theme-github';
 import 'ace-builds/src-noconflict/theme-twilight';
 import { connect } from 'react-redux';
@@ -12,7 +12,6 @@ function mapStateToProps(state: RootState) {
   return {
     jobs:        state.jobs,
     theme:       state.uiStyle.theme,
-    color:       state.uiStyle.color,
     isConnected: state.results.isConnected,
   };
 }
@@ -96,12 +95,12 @@ function Results(props: Props) {
       <div className="results-detail">
         {activeJob && activeJob.results ? (
           <AceEditor
-            mode="java"
+            mode="cobol"
             theme={props.theme === 'dark' ? 'twilight' : 'github'}
             name="RESULTS" // TODO: Change this to a generated value when we add multiple editors
             value={activeJob.results}
             readOnly
-            editorProps={{ $blockScrolling: Infinity, readOnly: true }}
+            editorProps={{ readOnly: true }}
             width="100%"
             height="100%"
             fontSize={20}

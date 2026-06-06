@@ -7,8 +7,22 @@ import { openFilePicker, newFile, saveFile } from './utils/nativeDialogs';
 import jes from './utils/jesFtp';
 import './app.global.css';
 
-// Hack: Exporting Store to have access in nativeDialogs / jesFtp.
-export const store = configureStore();
+// Restore persisted theme from localStorage so the user's preference survives
+// restarts. Defaults to 'dark' if nothing is stored.
+const savedTheme = localStorage.getItem('keypunch:theme') as 'dark' | 'light' | null;
+export const store = configureStore(
+  savedTheme ? { uiStyle: { theme: savedTheme } } : undefined
+);
+
+// Persist theme whenever it changes.
+let lastTheme = store.getState().uiStyle.theme;
+store.subscribe(() => {
+  const theme = store.getState().uiStyle.theme;
+  if (theme !== lastTheme) {
+    lastTheme = theme;
+    localStorage.setItem('keypunch:theme', theme);
+  }
+});
 
 // The native application menu is built in the MAIN process. Menu clicks for
 // editor actions arrive over IPC on the 'menu' channel; wire them to the same

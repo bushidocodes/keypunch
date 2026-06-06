@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import AceEditor from 'react-ace';
-import 'ace-builds/src-noconflict/mode-java';
+import 'ace-builds/src-noconflict/mode-cobol';
 import 'ace-builds/src-noconflict/theme-github';
 import 'ace-builds/src-noconflict/theme-twilight';
 import { connect } from 'react-redux';
@@ -69,7 +69,6 @@ function mapStateToProps(state: RootState) {
   return {
     datasets:        state.datasets,
     theme:           state.uiStyle.theme,
-    color:           state.uiStyle.color,
     explorerContent: state.explorer.explorerContent,
   };
 }
@@ -94,11 +93,11 @@ function Explorer(props: Props) {
       </div>
       <div className="explorer-editor">
         <AceEditor
-          mode="java"
+          mode="cobol"
           theme={props.theme === 'dark' ? 'twilight' : 'github'}
           name="EXPLORER" // TODO: Change this to a generated value when we add multiple editors
           readOnly
-          editorProps={{ $blockScrolling: Infinity, readOnly: true }}
+          editorProps={{ readOnly: true }}
           value={props.explorerContent}
           width="100%"
           height="100%"
