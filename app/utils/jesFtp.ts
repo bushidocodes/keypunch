@@ -69,6 +69,7 @@ class JES {
       await bridge().connect(getConfig());
       store.dispatch(setIsConnecting(false));
       store.dispatch(setIsConnected(true));
+      store.dispatch(setErrorMessage(''));
     } catch (err) {
       this._errorLookup(err);
     }
@@ -106,6 +107,7 @@ class JES {
       store.dispatch(refreshJobs(parsedJobs));
       store.dispatch(setIsSubmitting(false));
       store.dispatch(setIsRetrieving(false));
+      store.dispatch(setErrorMessage(''));
     } catch (err) {
       this._errorLookup(err);
     }
@@ -120,6 +122,7 @@ class JES {
       store.dispatch(setIsSubmitted(true));
       store.dispatch(setIsSubmitting(false));
       store.dispatch(setIsRetrieving(false));
+      store.dispatch(setErrorMessage(''));
     } catch (err) {
       this._errorLookup(err);
     }
@@ -132,6 +135,7 @@ class JES {
       await bridge().deleteJob(getConfig(), jobID);
       store.dispatch(setIsSubmitting(false));
       store.dispatch(setIsRetrieving(false));
+      store.dispatch(setErrorMessage(''));
     } catch (err) {
       this._errorLookup(err);
     }
@@ -146,6 +150,7 @@ class JES {
       store.dispatch(setIsRetrieved(true));
       store.dispatch(setIsSubmitting(false));
       store.dispatch(setIsRetrieving(false));
+      store.dispatch(setErrorMessage(''));
     } catch (err) {
       this._errorLookup(err);
     }
@@ -174,6 +179,7 @@ class JES {
       store.dispatch(setIsRetrieved(true));
       store.dispatch(setIsSubmitting(false));
       store.dispatch(setIsRetrieving(false));
+      store.dispatch(setErrorMessage(''));
     } catch (err) {
       this._errorLookup(err);
     }
@@ -188,6 +194,7 @@ class JES {
       store.dispatch(setIsRetrieved(true));
       store.dispatch(setIsSubmitting(false));
       store.dispatch(setIsRetrieving(false));
+      store.dispatch(setErrorMessage(''));
     } catch (err) {
       this._errorLookup(err);
     }
