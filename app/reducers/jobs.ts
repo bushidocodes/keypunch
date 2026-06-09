@@ -15,10 +15,18 @@ export default function jobs(
 ): JobsState {
   switch (action.type) {
     case REFRESH_JOBS: {
-      // Replace the jobs state with the incoming snapshot. Using merge kept
-      // stale keys for jobs that were deleted on the server; a direct replace
-      // ensures the UI reflects the real queue state.
-      return { ...(action.jobsState as JobMap) } as JobsState;
+      // Replace the jobs state with the incoming snapshot so stale jobs
+      // (deleted on the server) are removed, while preserving any downloaded
+      // results for jobs that are still present in the queue.
+      const incoming = action.jobsState as JobMap;
+      const next: JobsState = {};
+      for (const [id, job] of Object.entries(incoming)) {
+        const existingResults = state[id]?.results;
+        next[id] = existingResults !== undefined
+          ? { ...(job as Job), results: existingResults }
+          : { ...(job as Job) };
+      }
+      return next;
     }
     case LOAD_JOB_RESULTS: {
       const updated = { ...state };
