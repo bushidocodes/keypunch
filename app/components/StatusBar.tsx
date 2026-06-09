@@ -49,9 +49,11 @@ type Props = ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchT
 function StatusBar(props: Props) {
   return (
     <div className="status-bar">
-      <button className="btn-test" onClick={props.testIndicators}>
-        TEST
-      </button>
+      {process.env.NODE_ENV === 'development' && (
+        <button className="btn-test" onClick={props.testIndicators}>
+          TEST
+        </button>
+      )}
 
       {!props.isConnected ? (
         <button className="btn-connect" onClick={props.jesConnect}>
