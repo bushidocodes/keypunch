@@ -46,10 +46,10 @@ vi.mock('../../app/utils/jesFtp', () => ({
 // Stub nativeDialogs so the TEST button doesn't fire a cascade of setTimeout
 // dispatches that would bleed into subsequent tests.
 vi.mock('../../app/utils/nativeDialogs', () => ({
-  testIndicators: vi.fn(),
-  openFilePicker: vi.fn(),
-  newFile:        vi.fn(),
-  saveFile:       vi.fn(),
+  testConnectivity: vi.fn(),
+  openFilePicker:   vi.fn(),
+  newFile:          vi.fn(),
+  saveFile:         vi.fn(),
 }));
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -111,11 +111,11 @@ describe('StatusBar', () => {
       expect(screen.getByRole('button', { name: 'TEST' })).toBeInTheDocument();
     });
 
-    it('calls testIndicators when the TEST button is clicked', async () => {
-      const { testIndicators } = await import('../../app/utils/nativeDialogs');
+    it('calls testConnectivity when the TEST button is clicked', async () => {
+      const { testConnectivity } = await import('../../app/utils/nativeDialogs');
       renderStatusBar();
       fireEvent.click(screen.getByRole('button', { name: 'TEST' }));
-      expect(testIndicators).toHaveBeenCalledOnce();
+      expect(testConnectivity).toHaveBeenCalledOnce();
     });
   });
 
