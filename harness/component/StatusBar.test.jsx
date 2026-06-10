@@ -106,7 +106,11 @@ describe('StatusBar', () => {
   });
 
   describe('TEST button', () => {
-    it('renders the TEST button', () => {
+    // The TEST button is only rendered in development builds.
+    beforeEach(() => { vi.stubEnv('NODE_ENV', 'development'); });
+    afterEach(() => { vi.unstubAllEnvs(); });
+
+    it('renders the TEST button in development mode', () => {
       renderStatusBar();
       expect(screen.getByRole('button', { name: 'TEST' })).toBeInTheDocument();
     });
@@ -116,6 +120,12 @@ describe('StatusBar', () => {
       renderStatusBar();
       fireEvent.click(screen.getByRole('button', { name: 'TEST' }));
       expect(testIndicators).toHaveBeenCalledOnce();
+    });
+
+    it('does not render the TEST button in production mode', () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      renderStatusBar();
+      expect(screen.queryByRole('button', { name: 'TEST' })).not.toBeInTheDocument();
     });
   });
 

@@ -101,9 +101,18 @@ describe('App', () => {
   });
 
   describe('status bar', () => {
-    it('renders the StatusBar (TEST button visible)', () => {
+    it('renders the StatusBar with TEST button visible in development', () => {
+      vi.stubEnv('NODE_ENV', 'development');
       renderApp();
       expect(screen.getByRole('button', { name: 'TEST' })).toBeInTheDocument();
+      vi.unstubAllEnvs();
+    });
+
+    it('renders the StatusBar without TEST button in production', () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      renderApp();
+      expect(screen.queryByRole('button', { name: 'TEST' })).not.toBeInTheDocument();
+      vi.unstubAllEnvs();
     });
   });
 });
