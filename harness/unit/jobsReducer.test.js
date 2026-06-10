@@ -48,6 +48,15 @@ describe('jobs reducer', () => {
     expect(Object.keys(state)).toHaveLength(2);
   });
 
+  it('removes jobs that are absent from the new snapshot (replace semantics)', () => {
+    // First poll: both jobs arrive.
+    let state = reducer(undefined, refreshJobs({ [JOB_A.jobID]: JOB_A, [JOB_B.jobID]: JOB_B }));
+    // Second poll: only JOB_B is returned (JOB_A finished/purged on the server).
+    state = reducer(state, refreshJobs({ [JOB_B.jobID]: JOB_B }));
+    expect(state[JOB_A.jobID]).toBeUndefined();
+    expect(state[JOB_B.jobID]).toBeDefined();
+  });
+
   it('attaches results to a specific job on LOAD_JOB_RESULTS', () => {
     let state = reducer(undefined, refreshJobs({ [JOB_A.jobID]: JOB_A }));
     state = reducer(state, loadJobResults('JOB00001', 'spool output here'));

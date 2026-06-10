@@ -1,4 +1,3 @@
-import merge from 'lodash/merge';
 import { REFRESH_JOBS, LOAD_JOB_RESULTS } from '../constants';
 import type { Job, JobMap } from '../utils/jesParse';
 import type { JobsAction } from '../actions/jobs';
@@ -16,10 +15,18 @@ export default function jobs(
 ): JobsState {
   switch (action.type) {
     case REFRESH_JOBS: {
-      // Merge incoming jobs into existing state so previously-downloaded results
-      // are preserved. The original code mutated in place; _.merge does the same
-      // but without the side-effect on the original state object.
-      return merge({} as JobsState, state, action.jobsState as JobMap);
+      // Replace the jobs state with the incoming snapshot so stale jobs
+      // (deleted on the server) are removed, while preserving any downloaded
+      // results for jobs that are still present in the queue.
+      const incoming = action.jobsState as JobMap;
+      const next: JobsState = {};
+      for (const [id, job] of Object.entries(incoming)) {
+        const existingResults = state[id]?.results;
+        next[id] = existingResults !== undefined
+          ? { ...(job as Job), results: existingResults }
+          : { ...(job as Job) };
+      }
+      return next;
     }
     case LOAD_JOB_RESULTS: {
       const updated = { ...state };
