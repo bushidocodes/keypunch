@@ -20,6 +20,7 @@ if (typeof window !== 'undefined') {
       listDatasets:            vi.fn(() => Promise.resolve([])),
       listMembers:             vi.fn(() => Promise.resolve([])),
       listDatasetsWithMembers: vi.fn(() => Promise.resolve({ datasetRows: [], memberRowsByDs: {} })),
+      retrieveMember:          vi.fn(() => Promise.resolve('')),
     },
     openFile:      vi.fn(() => Promise.resolve(null)),
     saveFile:      vi.fn(() => Promise.resolve(null)),
