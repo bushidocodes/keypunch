@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import Indicator from './Indicator';
 import { store } from '../index';
-import { testIndicators } from '../utils/nativeDialogs';
+import { testConnectivity } from '../utils/nativeDialogs';
 import jes from '../utils/jesFtp';
 import type { RootState } from '../reducers';
 
@@ -22,9 +22,9 @@ function mapStateToProps(state: RootState) {
 
 function mapDispatchToProps() {
   return {
-    testIndicators: (evt: React.MouseEvent) => {
+    testConnectivity: (evt: React.MouseEvent) => {
       evt.preventDefault();
-      testIndicators();
+      testConnectivity();
     },
     jesConnect: (evt: React.MouseEvent) => {
       evt.preventDefault();
@@ -49,7 +49,7 @@ type Props = ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchT
 function StatusBar(props: Props) {
   return (
     <div className="status-bar">
-      <button className="btn-test" onClick={props.testIndicators}>
+      <button className="btn-test" onClick={props.testConnectivity}>
         TEST
       </button>
 

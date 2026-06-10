@@ -3,17 +3,8 @@
 // this module just calls those and dispatches the results into redux.
 
 import { setEditorContent, setEditorPath } from '../actions/editor';
-import {
-  setIsConnected,
-  setIsConnecting,
-  setIsSubmitted,
-  setIsSubmitting,
-  setIsRetrieved,
-  setIsRetrieving,
-  setIsDisconnected,
-  setIsDisconnecting,
-} from '../actions/results';
 import { store } from '../index';
+import jes from './jesFtp';
 
 export async function openFilePicker(): Promise<void> {
   const result = await window.keypunch.openFile();
@@ -37,26 +28,9 @@ export async function saveFile(overwrite = false): Promise<void> {
   }
 }
 
-export function testIndicators(): void {
-  const tests = [
-    () => setIsConnecting(true),
-    () => setIsConnecting(false),
-    () => setIsSubmitting(true),
-    () => setIsSubmitting(false),
-    () => setIsRetrieving(true),
-    () => setIsRetrieving(false),
-    () => setIsDisconnecting(true),
-    () => setIsDisconnecting(false),
-    () => setIsConnected(true),
-    () => setIsSubmitted(true),
-    () => setIsRetrieved(true),
-    () => setIsDisconnected(true),
-    () => setIsConnected(false),
-    () => setIsSubmitted(false),
-    () => setIsRetrieved(false),
-    () => setIsDisconnected(false),
-  ];
-  tests.forEach((test, index) => {
-    window.setTimeout(() => { store.dispatch(test()); }, 2000 * index);
-  });
+export async function testConnectivity(): Promise<void> {
+  await jes.connect();
+  if (!store.getState().results.isConnected) return;
+  await new Promise<void>(r => window.setTimeout(r, 1500));
+  await jes.disconnect();
 }

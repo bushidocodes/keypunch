@@ -45,10 +45,10 @@ vi.mock('../../app/utils/jesFtp', () => ({
 }));
 
 vi.mock('../../app/utils/nativeDialogs', () => ({
-  testIndicators: vi.fn(),
-  openFilePicker: vi.fn(),
-  newFile:        vi.fn(),
-  saveFile:       vi.fn(),
+  testConnectivity: vi.fn(),
+  openFilePicker:   vi.fn(),
+  newFile:          vi.fn(),
+  saveFile:         vi.fn(),
 }));
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
