@@ -121,27 +121,14 @@ class JES {
   }
 
   async disconnect(): Promise<string> {
-    let status = this.ftp.getConnectionStatus();
+    const status = this.ftp.getConnectionStatus();
     if (status === 'not yet connected' || status === 'disconnected') {
       return 'disconnected';
     }
-    try {
-      await this.ftp.end();
-    } catch {
-      // fall through to a forced destroy below
-    }
-    status = this.ftp.getConnectionStatus();
-    let numTries = 10;
-    while (status === 'disconnecting' && numTries > 0) {
-      await this._sleep(2000);
-      status = this.ftp.getConnectionStatus();
-      numTries--;
-    }
-    if (status === 'disconnecting' || status === 'connected') {
-      try { this.ftp.destroy(); } catch { /* already gone */ }
-    }
-    // promise-ftp cannot be reused after end()/destroy(); make a fresh client
-    // so a later connect() works.
+    // ftp.end() waits for socket 'close' which can stall in Electron's event
+    // loop. Destroy tears down the socket synchronously; promise-ftp cannot be
+    // reused after destroy(), so we always recreate.
+    try { this.ftp.destroy(); } catch { /* already gone */ }
     this.ftp = new PromiseFtp();
     return 'disconnected';
   }
