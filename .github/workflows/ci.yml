@@ -19,8 +19,8 @@ jobs:
     name: Lint (ESLint)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: npm
@@ -34,8 +34,8 @@ jobs:
     name: Typecheck (tsc)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: npm
@@ -52,8 +52,8 @@ jobs:
       run:
         working-directory: harness
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: npm
@@ -73,8 +73,8 @@ jobs:
     name: Build (electron-vite)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: npm
@@ -90,8 +90,8 @@ jobs:
     name: E2E (Playwright _electron + xvfb)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: npm
