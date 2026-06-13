@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import type { UiStyleState } from '../reducers/uiStyle';
 
 type IconName = 'punchCard' | 'settings' | 'help' | 'printout' | 'mainframe';
