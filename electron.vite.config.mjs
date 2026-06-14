@@ -13,7 +13,10 @@ export default defineConfig({
       },
       rollupOptions: {
         output: {
-          entryFileNames: 'main.js'
+          // Force CJS format and .cjs extension so Node/Electron treats it as
+          // CJS even though the root package.json declares "type": "module".
+          format: 'cjs',
+          entryFileNames: 'main.cjs'
         }
       }
     }
@@ -26,8 +29,11 @@ export default defineConfig({
       },
       rollupOptions: {
         output: {
-          // Preload must be CommonJS (sandbox-friendly) — keep the .js name.
-          entryFileNames: 'preload.js'
+          // Preload must be CommonJS (sandbox-friendly) — force CJS format and
+          // use .cjs extension so Node/Electron treats it as CJS even though the
+          // root package.json declares "type": "module".
+          format: 'cjs',
+          entryFileNames: 'preload.cjs'
         }
       }
     }

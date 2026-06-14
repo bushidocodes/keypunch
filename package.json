@@ -3,7 +3,8 @@
   "productName": "Keypunch",
   "version": "0.1.0",
   "description": "Lightweight text editor designed to accelerate the ease of learning core IBM Mainframe languages like COBOL, PL/I, or z/Architecture Assembler by providing a dynamic hot reloading experience similar to Code School or Codecademy.",
-  "main": "out/main/main.js",
+  "type": "module",
+  "main": "out/main/main.cjs",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",

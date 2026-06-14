@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import AceEditor from 'react-ace';
+import AceEditor from '../utils/react-ace';
 import 'ace-builds/src-noconflict/mode-cobol';
 import 'ace-builds/src-noconflict/theme-github';
 import 'ace-builds/src-noconflict/theme-twilight';

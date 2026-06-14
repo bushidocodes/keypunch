@@ -1,7 +1,7 @@
 // End-to-end test of the REAL built Keypunch app driven through Playwright's
 // `_electron` driver, against the in-process mock z/OS FTP/JES server.
 //
-// It launches the packaged build (out/main/main.js, the root package.json
+// It launches the packaged build (out/main/main.cjs, the root package.json
 // `main`), with all FTP I/O really happening in the main process over a TCP
 // socket to the mock server. The renderer only talks to main through the
 // `window.keypunch` preload bridge.
