@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 // Playwright config for the Electron end-to-end test. The e2e launches the
-// REAL built app (out/main/main.js) via Playwright's `_electron` driver and
+// REAL built app (out/main/main.cjs) via Playwright's `_electron` driver and
 // drives the UI against the in-process mock JES server. No browser download is
 // needed — `_electron.launch` uses the app's own Electron binary.
 export default defineConfig({

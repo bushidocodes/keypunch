@@ -1,5 +1,5 @@
 // Minimal automated *boot* smoke for the built app: launch the real Electron
-// binary against the electron-vite build output (out/main/main.js, referenced
+// binary against the electron-vite build output (out/main/main.cjs, referenced
 // by the root package.json `main`) and assert it starts and stays up — i.e. the
 // main process, preload, and renderer bundle load without a fatal error — then
 // terminate.
@@ -15,7 +15,7 @@ import { existsSync } from 'fs';
 
 const electronExe = fileURLToPath(new URL('../node_modules/electron/dist/electron.exe', import.meta.url));
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
-const builtMain = fileURLToPath(new URL('../out/main/main.js', import.meta.url));
+const builtMain = fileURLToPath(new URL('../out/main/main.cjs', import.meta.url));
 const UPTIME_MS = Number(process.env.SMOKE_UPTIME_MS || 8000);
 
 if (!existsSync(electronExe)) {
@@ -23,7 +23,7 @@ if (!existsSync(electronExe)) {
   process.exit(1);
 }
 if (!existsSync(builtMain)) {
-  console.error('FAIL: out/main/main.js not found — run `npm run build` first.');
+  console.error('FAIL: out/main/main.cjs not found — run `npm run build` first.');
   process.exit(1);
 }
 

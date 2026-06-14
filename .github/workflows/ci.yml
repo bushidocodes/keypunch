@@ -84,7 +84,7 @@ jobs:
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
       - run: npm run build
       - name: Verify build artifacts
-        run: test -f out/main/main.js && test -f out/preload/preload.js && test -f out/renderer/index.html
+        run: test -f out/main/main.cjs && test -f out/preload/preload.cjs && test -f out/renderer/index.html
 
   e2e:
     name: E2E (Playwright _electron + xvfb)
