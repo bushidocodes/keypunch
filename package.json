@@ -101,7 +101,7 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-redux": "^9.2.0",
-    "react-router-dom": "^6.30.4"
+    "react-router-dom": "^7.17.0"
   },
   "allowScripts": {
     "electron-winstaller@5.4.0": true,
