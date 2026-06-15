@@ -1,11 +1,12 @@
 // Integration smoke at the protocol layer: drive the mock z/OS FTP/JES server
-// with the same `promise-ftp` client `app/utils/jesFtp.js` uses, running the
-// same command sequences (ascii -> site -> list/get/put/delete/cwd), and feed
-// the raw responses through the real parsers. This exercises the full FTP
+// with `basic-ftp` (the same client electron/main.ts uses), running the same
+// command sequences (TYPE A -> SITE -> LIST/RETR/STOR/DELE/CWD), and feed the
+// raw responses through the real parsers.  This exercises the full FTP
 // round-trip + parsing without needing the Electron GUI or the Redux store.
 
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
-import PromiseFtp from 'promise-ftp';
+import { Client } from 'basic-ftp';
+import { Writable, PassThrough } from 'stream';
 import { createMockJesServer } from '../mock-server.js';
 import { parseJobs, parseDatasets, parseMembers } from '../../app/utils/jesParse';
 
@@ -16,35 +17,44 @@ beforeAll(async () => { port = await srv.listen(); });
 afterAll(async () => { await srv.close(); });
 beforeEach(() => { srv.reseed(); }); // reset to the baseline fixture before each test
 
-function connect() {
-  const ftp = new PromiseFtp();
-  return ftp
-    .connect({ host: '127.0.0.1', port, user: 'IBMUSER', password: 'secret' })
-    .then(() => ftp);
+async function connect() {
+  const client = new Client();
+  await client.access({ host: '127.0.0.1', port, user: 'IBMUSER', password: 'secret', secure: false });
+  return client;
 }
 
-function streamToString(stream) {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    stream.on('data', (c) => { data += c.toString(); });
-    stream.on('end', () => resolve(data));
-    stream.on('error', reject);
-    // node-ftp hands back a paused data socket; on modern Node, attaching a
-    // 'data' listener to an explicitly-paused stream does NOT auto-resume it,
-    // so we must resume explicitly. (The app's jesFtp.js omits this — a latent
-    // bug to address when FTP moves to the main process in Phase 3.)
-    stream.resume();
-  });
+// basic-ftp parses LIST into FileInfo objects; our renderer parsers expect raw
+// MVS listing strings.  Override parseList temporarily to capture raw lines.
+async function rawList(client) {
+  let rawLines = [];
+  const saved = client.parseList;
+  client.parseList = (raw) => {
+    rawLines = raw.split(/\r?\n/).filter(Boolean);
+    return [];
+  };
+  try {
+    await client.list();
+  } finally {
+    client.parseList = saved;
+  }
+  return rawLines;
+}
+
+async function downloadToString(client, remotePath) {
+  const chunks = [];
+  const dest = new Writable({ write(chunk, _, cb) { chunks.push(chunk); cb(); } });
+  await client.downloadTo(dest, remotePath);
+  return Buffer.concat(chunks).toString();
 }
 
 describe('mock JES FTP round-trip', () => {
   it('walks the core Keypunch user journey end to end', async () => {
-    const ftp = await connect();
-    await ftp.ascii();
+    const client = await connect();
+    await client.send('TYPE A');
 
     // --- Results pane: poll the JES queue ---
-    await ftp.site('FILETYPE=JES');
-    const jobRows = await ftp.list('');
+    await client.send('SITE FILETYPE=JES');
+    const jobRows = await rawList(client);
     expect(jobRows).toEqual([
       'IBMUSER JOB00045 OUTPUT 3 Spool Files',
       'IBMUSER JOB00046 ACTIVE'
@@ -55,60 +65,62 @@ describe('mock JES FTP round-trip', () => {
     expect(jobs.JOB00046.numberOfSpoolFiles).toBeNull();
 
     // --- Retrieve a job's spool output (RETR <jobID>.x) ---
-    const out = await streamToString(await ftp.get('JOB00045.x'));
+    const out = await downloadToString(client, 'JOB00045.x');
     expect(out).toMatch(/HELLO WORLD FROM JES/);
 
     // --- Submit ("easy button"): STOR adds a new job to the queue ---
-    await ftp.put(Buffer.from('//IBMUSER JOB\n// EXEC PGM=IEFBR14\n'), '/');
-    const afterSubmit = parseJobs(await ftp.list(''));
+    const src = new PassThrough();
+    src.end(Buffer.from('//IBMUSER JOB\n// EXEC PGM=IEFBR14\n'));
+    await client.uploadFrom(src, '/');
+    const afterSubmit = parseJobs(await rawList(client));
     expect(afterSubmit.JOB00100).toBeDefined();
     expect(afterSubmit.JOB00100.status).toBe('OUTPUT');
 
     // --- Delete a job ---
-    await ftp.delete('JOB00046');
-    const afterDelete = parseJobs(await ftp.list(''));
+    await client.remove('JOB00046');
+    const afterDelete = parseJobs(await rawList(client));
     expect(afterDelete.JOB00046).toBeUndefined();
 
     // --- Explorer pane: list datasets ---
-    await ftp.site('FILETYPE=SEQ');
-    const datasets = parseDatasets(await ftp.list(''));
+    await client.send('SITE FILETYPE=SEQ');
+    const datasets = parseDatasets(await rawList(client));
     expect(datasets.map((d) => d.name)).toEqual(['IBMUSER.SOURCE', 'IBMUSER.JCL']);
 
     // --- Explorer: list members of a PDS ---
-    await ftp.cwd('IBMUSER.SOURCE');
-    const members = parseMembers(await ftp.list(''), 'IBMUSER.SOURCE');
+    await client.cd('IBMUSER.SOURCE');
+    const members = parseMembers(await rawList(client), 'IBMUSER.SOURCE');
     expect(members.map((m) => m.name)).toEqual(['HELLO', 'COBOL1']);
-    await ftp.cwd('~');
+    await client.cd('~');
 
     // --- Explorer: open a member into the editor (RETR <member>) ---
-    await ftp.cwd('IBMUSER.SOURCE');
-    const memberSrc = await streamToString(await ftp.get('HELLO'));
+    await client.cd('IBMUSER.SOURCE');
+    const memberSrc = await downloadToString(client, 'HELLO');
     expect(memberSrc).toMatch(/PROGRAM-ID\. HELLO\./);
-    await ftp.cwd('~');
+    await client.cd('~');
 
-    await ftp.end();
+    client.close();
   });
 
   it('reseed resets the queue so submitted jobs do not leak between runs', async () => {
-    const ftp = await connect();
-    await ftp.ascii();
-    await ftp.site('FILETYPE=JES');
-    const jobs = parseJobs(await ftp.list(''));
+    const client = await connect();
+    await client.send('TYPE A');
+    await client.send('SITE FILETYPE=JES');
+    const jobs = parseJobs(await rawList(client));
     // JOB00100 from the previous test must NOT be present after reseed.
     expect(Object.keys(jobs).sort()).toEqual(['JOB00045', 'JOB00046']);
-    await ftp.end();
+    client.close();
   });
 
   it('reports the empty-queue informational message as zero jobs', async () => {
     // Drain the baseline queue, then confirm the parser yields {}.
-    const ftp = await connect();
-    await ftp.ascii();
-    await ftp.site('FILETYPE=JES');
-    await ftp.delete('JOB00045');
-    await ftp.delete('JOB00046');
-    const rows = await ftp.list('');
+    const client = await connect();
+    await client.send('TYPE A');
+    await client.send('SITE FILETYPE=JES');
+    await client.remove('JOB00045');
+    await client.remove('JOB00046');
+    const rows = await rawList(client);
     expect(rows).toEqual(['No jobs found on Held queue']);
     expect(parseJobs(rows)).toEqual({});
-    await ftp.end();
+    client.close();
   });
 });

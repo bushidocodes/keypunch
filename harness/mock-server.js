@@ -1,7 +1,7 @@
 // Minimal mock z/OS FTP / JES server for the Keypunch verification harness.
 //
-// It speaks just enough of the FTP protocol for the `promise-ftp`/`ftp` client
-// that `app/utils/jesFtp.js` uses, plus the MVS-specific behaviour Keypunch
+// It speaks just enough of the FTP protocol for the `basic-ftp` client
+// that `electron/main.ts` uses, plus the MVS-specific behaviour Keypunch
 // relies on: `SITE FILETYPE=JES|SEQ`, JES job listings, dataset/member
 // listings, job-output retrieval (`RETR <jobID>.x`), job submission (`STOR`),
 // and job deletion (`DELE`). It is intentionally permissive and in-memory.

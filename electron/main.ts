@@ -2,7 +2,7 @@
 //
 // Owns everything that needs Node: the BrowserWindow, the native application
 // menu, all filesystem access (open/save dialogs + fs), and all FTP/JES traffic
-// to the mainframe (via `promise-ftp`). The renderer is locked down
+// to the mainframe (via `basic-ftp`). The renderer is locked down
 // (contextIsolation:true, nodeIntegration:false) and reaches main only through
 // the `window.keypunch` API defined in preload.ts over IPC.
 
@@ -19,7 +19,8 @@ import {
 import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import PromiseFtp from 'promise-ftp';
+import { Client, type FileInfo } from 'basic-ftp';
+import { Writable, PassThrough } from 'stream';
 import type {
   FtpConfig,
   ConfirmOptions,
@@ -39,13 +40,13 @@ let mainWindow: BrowserWindow | null = null;
 //
 // All public methods are called through the serial IPC queue (see
 // registerIpc below), so only one FTP operation runs at a time and their
-// commands can never interleave on the shared PromiseFtp connection.
+// commands can never interleave on the shared Client connection.
 // Internal helpers (_ensureConnected, _setEncoding, _setFiletype) are
 // private and must NOT be wrapped in the queue themselves — they are only
 // called from within already-queued operations.
 // --------------------------------------------------------------------------
 class JES {
-  private ftp: PromiseFtp;
+  private ftp: Client;
   // Credentials are stored here after the renderer calls jes:setCredentials.
   // They are intentionally NOT carried in FtpConfig (the per-call IPC payload)
   // so the password is not re-transmitted on every pollJobs / listDatasets call.
@@ -53,7 +54,7 @@ class JES {
   private _password = '';
 
   constructor() {
-    this.ftp = new PromiseFtp();
+    this.ftp = new Client();
   }
 
   // -----------------------------------------------------------------------
@@ -61,45 +62,55 @@ class JES {
   // -----------------------------------------------------------------------
 
   private async _ensureConnected(config: FtpConfig): Promise<void> {
-    if (this.ftp.getConnectionStatus() === 'connected') return;
-    await this.ftp.connect({
+    if (!this.ftp.closed) return;
+    await this.ftp.access({
       host:     config.hostName,
-      port:     config.ftpPort,
+      port:     Number(config.ftpPort),
       user:     this._username,
       password: this._password,
       // `true` → explicit FTPS (AUTH TLS): the control connection is
       // established in plaintext and then upgraded with AUTH TLS.
       // `false` → plain FTP (default; required for z/OS servers without TLS).
-      secure: config.ftpsEnabled ? true : false,
+      secure: config.ftpsEnabled,
     });
   }
 
   private async _setEncoding(type: string): Promise<void> {
-    if (type === 'ascii') await this.ftp.ascii();
+    if (type === 'ascii') await this.ftp.send('TYPE A');
   }
 
   private async _setFiletype(filetype: string): Promise<void> {
     if (filetype === 'jes' || filetype === 'seq') {
-      await this.ftp.site('FILETYPE=' + filetype);
+      await this.ftp.send('SITE FILETYPE=' + filetype.toUpperCase());
     }
   }
 
-  private _streamToString(stream: NodeJS.ReadableStream): Promise<string> {
-    return new Promise((resolve, reject) => {
-      let data = '';
-      stream.on('data', (chunk: Buffer | string) => { data += chunk.toString(); });
-      stream.on('end', () => resolve(data));
-      stream.on('error', reject);
-      // CRITICAL: node-ftp hands back a PAUSED data socket. On modern Node,
-      // attaching a 'data' listener to an explicitly-paused stream does NOT
-      // auto-resume it, so without this call the stream never flows and the
-      // transfer hangs forever. This is the latent bug from issue #16.
-      stream.resume();
-    });
+  // basic-ftp parses LIST into FileInfo objects, but the renderer parsers
+  // (jesParse.ts) expect raw z/OS MVS listing strings.  Override parseList
+  // temporarily so list() collects the raw text instead of parsing it.
+  private async _rawList(): Promise<string[]> {
+    let rawLines: string[] = [];
+    const saved = this.ftp.parseList;
+    this.ftp.parseList = (raw: string): FileInfo[] => {
+      rawLines = raw.split(/\r?\n/).filter(Boolean);
+      return [];
+    };
+    try {
+      await this.ftp.list();
+    } finally {
+      this.ftp.parseList = saved;
+    }
+    return rawLines;
   }
 
-  private _sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+  // Download a remote file into memory as a UTF-8 string.
+  private async _downloadToString(remotePath: string): Promise<string> {
+    const chunks: Buffer[] = [];
+    const dest = new Writable({
+      write(chunk: Buffer, _enc: string, cb: () => void) { chunks.push(chunk); cb(); }
+    });
+    await this.ftp.downloadTo(dest, remotePath);
+    return Buffer.concat(chunks).toString();
   }
 
   // -----------------------------------------------------------------------
@@ -121,15 +132,11 @@ class JES {
   }
 
   async disconnect(): Promise<string> {
-    const status = this.ftp.getConnectionStatus();
-    if (status === 'not yet connected' || status === 'disconnected') {
-      return 'disconnected';
-    }
-    // ftp.end() waits for socket 'close' which can stall in Electron's event
-    // loop. Destroy tears down the socket synchronously; promise-ftp cannot be
-    // reused after destroy(), so we always recreate.
-    try { this.ftp.destroy(); } catch { /* already gone */ }
-    this.ftp = new PromiseFtp();
+    if (this.ftp.closed) return 'disconnected';
+    // close() tears down the socket; Client cannot be reused after that,
+    // so we always recreate — mirrors the old promise-ftp destroy() pattern.
+    this.ftp.close();
+    this.ftp = new Client();
     return 'disconnected';
   }
 
@@ -138,7 +145,7 @@ class JES {
     await this._ensureConnected(config);
     await this._setEncoding('ascii');
     await this._setFiletype('jes');
-    return this.ftp.list('');
+    return this._rawList();
   }
 
   // STOR a job. `contentString` is the editor contents.
@@ -146,7 +153,9 @@ class JES {
     await this._ensureConnected(config);
     await this._setEncoding('ascii');
     await this._setFiletype('jes');
-    await this.ftp.put(Buffer.from(contentString), '/');
+    const src = new PassThrough();
+    src.end(Buffer.from(contentString));
+    await this.ftp.uploadFrom(src, '/');
     return 'submitted';
   }
 
@@ -155,15 +164,14 @@ class JES {
     await this._ensureConnected(config);
     await this._setEncoding('ascii');
     await this._setFiletype('jes');
-    const stream = await this.ftp.get(jobID + '.x');
-    return this._streamToString(stream);
+    return this._downloadToString(jobID + '.x');
   }
 
   async deleteJob(config: FtpConfig, jobID: string): Promise<string> {
     await this._ensureConnected(config);
     await this._setEncoding('ascii');
     await this._setFiletype('jes');
-    await this.ftp.delete(jobID);
+    await this.ftp.remove(jobID);
     return 'deleted';
   }
 
@@ -172,7 +180,7 @@ class JES {
     await this._ensureConnected(config);
     await this._setEncoding('ascii');
     await this._setFiletype('seq');
-    return this.ftp.list('');
+    return this._rawList();
   }
 
   // Returns raw LIST lines for the members of `dsname`.
@@ -181,16 +189,15 @@ class JES {
     await this._setEncoding('ascii');
     await this._setFiletype('seq');
     try {
-      await this.ftp.cwd(dsname);
-      const rows = await this.ftp.list('');
-      return rows;
+      await this.ftp.cd(dsname);
+      return await this._rawList();
     } catch {
       // "No Members Found" / empty PDS — mirror the old behaviour of treating
       // this as an empty member list rather than an error.
       return [];
     } finally {
       // MVS treats the home directory as the high-level-qualifier (the userid).
-      try { await this.ftp.cwd('~'); } catch { /* best-effort reset */ }
+      try { await this.ftp.cd('~'); } catch { /* best-effort reset */ }
     }
   }
 
@@ -200,12 +207,11 @@ class JES {
     await this._setEncoding('ascii');
     await this._setFiletype('seq');
     try {
-      await this.ftp.cwd('~');
-      await this.ftp.cwd(dsname);
-      const stream = await this.ftp.get(member);
-      return await this._streamToString(stream);
+      await this.ftp.cd('~');
+      await this.ftp.cd(dsname);
+      return await this._downloadToString(member);
     } finally {
-      try { await this.ftp.cwd('~'); } catch { /* best-effort */ }
+      try { await this.ftp.cd('~'); } catch { /* best-effort */ }
     }
   }
 
@@ -224,7 +230,7 @@ class JES {
     await this._setEncoding('ascii');
     await this._setFiletype('seq');
 
-    const datasetRows = await this.ftp.list('');
+    const datasetRows = await this._rawList();
 
     // Extract the dsname from each row (10th space-separated column, matching
     // the parseDatasets column order in jesParse.ts). Slice off the header row.
@@ -236,13 +242,13 @@ class JES {
     const memberRowsByDs: Record<string, string[]> = {};
     for (const dsname of dsnames) {
       try {
-        await this.ftp.cwd(dsname);
-        memberRowsByDs[dsname] = await this.ftp.list('');
+        await this.ftp.cd(dsname);
+        memberRowsByDs[dsname] = await this._rawList();
       } catch {
         // Empty / unreadable PDS — treat as no members (mirrors listMembers).
         memberRowsByDs[dsname] = [];
       } finally {
-        try { await this.ftp.cwd('~'); } catch { /* best-effort reset */ }
+        try { await this.ftp.cd('~'); } catch { /* best-effort reset */ }
       }
     }
 
