@@ -67,8 +67,12 @@ export default defineConfig({
     alias: [
       // Stub out react-ace — the real editor uses Worker/canvas APIs that
       // don't exist in jsdom.  The shim renders a plain <textarea>.
+      // The regex matches the full specifier (via .*…$) so String.replace()
+      // substitutes the entire import path, not just the substring.  It covers
+      // both the old npm specifier ('react-ace') and the current relative path
+      // ('…/utils/react-ace') after the package was inlined.
       {
-        find: 'react-ace',
+        find: /.*react-ace$/,
         replacement: resolve(__dirname, 'component/__mocks__/react-ace.js'),
       },
       // Stub out ace-builds and all its sub-paths
