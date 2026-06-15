@@ -4,9 +4,8 @@
 
 | Path | Purpose |
 |---|---|
-| `src/main/` | Electron main process (Node context) |
-| `src/preload/` | Preload script — bridges main ↔ renderer via IPC |
-| `src/renderer/` | React renderer (Vite, TypeScript) |
+| `electron/` | Electron main process + preload script (Node context) |
+| `app/` | React renderer (Vite, TypeScript) |
 | `harness/` | Vitest unit/integration tests + Playwright e2e tests |
 | `resources/` | electron-builder asset directory (icons, images) |
 | `out/` | electron-vite build output (git-ignored) |
@@ -88,6 +87,23 @@ git push origin v0.x.y
 
 This triggers the packaging workflow automatically. Monitor progress at:
 `https://github.com/bushidocodes/keypunch/actions/workflows/package.yml`
+
+## Dependency notes
+
+### `electron-vite` beta pin
+
+`electron-vite` is pinned to `^6.0.0-beta.1` (pre-release) rather than the
+`latest` dist-tag (`5.0.0`). This is intentional:
+
+- The project uses **Vite 8** (`vite ^8.0.16`).
+- `electron-vite@5` only supports `vite ^5 || ^6 || ^7` — Vite 8 is not in its
+  peer-dependency range and `npm install` will refuse the combination.
+- `electron-vite@6.0.0-beta.1` extended the peer range to `^6 || ^7 || ^8`.
+
+Until an `electron-vite` v6 stable release ships, the beta is the only
+published version that supports Vite 8. Watch
+[`electron-vite` releases](https://github.com/alex8088/electron-vite/releases)
+and upgrade when a stable v6 appears.
 
 ## CI overview
 
