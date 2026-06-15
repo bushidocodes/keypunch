@@ -7,6 +7,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.test.js',
+  globalSetup: './e2e/global-setup.js',
   timeout: 60000,
   expect: { timeout: 15000 },
   fullyParallel: false,
