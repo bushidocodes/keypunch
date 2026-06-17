@@ -281,7 +281,7 @@ function registerIpc(): void {
       properties: ['openFile', 'createDirectory', 'showHiddenFiles']
     });
     if (result.canceled || !result.filePaths.length) return null;
-    const filePath = result.filePaths[0];
+    const filePath = result.filePaths[0]!; // length checked above
     const content = await readFile(filePath, 'utf8');
     return { path: filePath, content };
   });
@@ -465,7 +465,8 @@ function buildMenu(): void {
         { role: 'quit' }
       ]
     });
-    (template[1].submenu as MenuItemConstructorOptions[]).push(
+    // template[1] exists: built with 4 items above, then unshift added one more.
+    (template[1]!.submenu as MenuItemConstructorOptions[]).push(
       { type: 'separator' },
       {
         label: 'Speech',

@@ -63,23 +63,20 @@ function StatusBar(props: Props) {
         </button>
       )}
 
-      {(['CONN', 'SENT', 'RETR', 'DISC'] as const).map((label, i) => {
-        const [isLit, isBlinking] = [
-          [props.isConnected,    props.isConnecting],
-          [props.isSubmitted,    props.isSubmitting],
-          [props.isRetrieved,    props.isRetrieving],
-          [props.isDisconnected, props.isDisconnecting],
-        ][i];
-        return (
-          <div key={label} className="indicator-cell">
-            {label}
-            <br />
-            <div className="indicator-light">
-              <Indicator isLit={isLit} isBlinking={isBlinking} />
-            </div>
+      {[
+        { label: 'CONN', isLit: props.isConnected,    isBlinking: props.isConnecting },
+        { label: 'SENT', isLit: props.isSubmitted,    isBlinking: props.isSubmitting },
+        { label: 'RETR', isLit: props.isRetrieved,    isBlinking: props.isRetrieving },
+        { label: 'DISC', isLit: props.isDisconnected, isBlinking: props.isDisconnecting },
+      ].map(({ label, isLit, isBlinking }) => (
+        <div key={label} className="indicator-cell">
+          {label}
+          <br />
+          <div className="indicator-light">
+            <Indicator isLit={isLit} isBlinking={isBlinking} />
           </div>
-        );
-      })}
+        </div>
+      ))}
 
       <button className="btn-load" onClick={props.submitJob}>
         LOAD

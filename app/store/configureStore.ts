@@ -10,12 +10,16 @@
 // the Phase-4 refresh (it added a CJS/ESM-interop wrinkle for no real benefit).
 import { configureStore as rtkConfigureStore } from '@reduxjs/toolkit';
 import rootReducer from '../reducers';
+import type { RootState } from '../reducers';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function configureStore(preloadedState?: any) {
+export default function configureStore(preloadedState?: Partial<RootState>) {
   const store = rtkConfigureStore({
     reducer: rootReducer,
-    preloadedState,
+    // RTK collapses each slice's PreloadedState to `never` for these
+    // default-param reducers, so it won't accept a typed partial directly. The
+    // public param above keeps callers honest; this cast bridges to RTK's type.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    preloadedState: preloadedState as any,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
         immutableCheck: false,
@@ -25,6 +29,9 @@ export default function configureStore(preloadedState?: any) {
   });
 
   if (import.meta.hot) {
+    // HMR-only (dev): the new module's default reducer carries a different
+    // PreloadedState generic than the store was created with, so `any` is the
+    // pragmatic bridge here.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     import.meta.hot.accept('../reducers', (mod: any) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

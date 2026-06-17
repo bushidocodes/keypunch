@@ -1,23 +1,25 @@
 {
-  // Incremental TypeScript adoption for this electron-vite + React 18 app.
-  //
-  // `allowJs` lets the still-untyped `.js` sources (the React components, redux
-  // store, etc.) coexist with the handful of files we've converted to `.ts`.
-  // `checkJs` is OFF on purpose: we only type-check the `.ts` files for now so
-  // we don't drown in errors from legacy JS. A future phase can flip it on.
+  // electron-vite + React 19 app — now 100% TypeScript.
   //
   // esbuild/Vite do the actual transpile; tsc here is type-checking only
   // (`noEmit`). `moduleResolution: bundler` matches how Vite resolves imports
   // (extensionless, no need for `.js` specifiers in TS).
+  //
+  // `strict` plus the extra `no*` flags below are the strictness baseline for
+  // shipped code: indexed access is checked for `undefined`, switch fall-through
+  // and missing returns are errors, etc. The harness (harness/tsconfig.json)
+  // extends this but relaxes `noUncheckedIndexedAccess` for terser test code.
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
-    "allowJs": true,
-    "checkJs": false,
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
     "noEmit": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
