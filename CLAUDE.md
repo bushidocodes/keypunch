@@ -6,7 +6,7 @@
 |---|---|
 | `electron/` | Electron main process + preload script (Node context) |
 | `app/` | React renderer (Vite, TypeScript) |
-| `harness/` | Vitest unit/integration tests + Playwright e2e tests |
+| `harness/` | Vitest unit/integration tests + Playwright e2e tests (TypeScript; own `tsconfig.json`) |
 | `resources/` | electron-builder asset directory (icons, images) |
 | `out/` | electron-vite build output (git-ignored) |
 | `release/` | electron-builder packaged installers (git-ignored) |
@@ -33,9 +33,15 @@ Tests live in `harness/`. Install harness deps separately:
 
 ```bash
 cd harness && npm ci
-npm test        # vitest unit + integration (mock FTP/JES)
-npm run e2e     # Playwright _electron GUI tests (needs built app + xvfb on Linux)
+npm run typecheck  # tsc --noEmit over the harness (+ the app modules it imports)
+npm test           # vitest unit + integration (mock FTP/JES)
+npm run e2e        # Playwright _electron GUI tests (needs built app + xvfb on Linux)
 ```
+
+The whole harness is TypeScript. It has its own `harness/tsconfig.json` (extends the
+root config, adds vitest globals); `npm run typecheck` there also transitively
+type-checks the `app/` modules the tests import, so an IPC-contract or reducer-shape
+change that breaks a test surfaces as a type error.
 
 Run e2e from repo root:
 
@@ -112,7 +118,7 @@ and upgrade when a stable v6 appears.
 | Job | What it checks |
 |---|---|
 | `lint` | ESLint (skips Electron binary download) |
-| `typecheck` | `tsc --noEmit` (skips Electron binary download) |
-| `harness-tests` | Vitest unit + integration tests |
+| `typecheck` | `tsc --noEmit` over app/ + electron/ (skips Electron binary download) |
+| `harness-tests` | Harness `tsc --noEmit` typecheck + Vitest unit + integration tests |
 | `build` | electron-vite production build + artifact assertions |
 | `e2e` | Playwright `_electron` GUI journey under xvfb |

@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import reducer from '../../app/reducers/results.ts';
+import type { Reducer } from '@reduxjs/toolkit';
+import resultsReducer from '../../app/reducers/results';
 import {
   setIsConnected,
   setIsConnecting,
   setResultsContent,
   setCurrentStep
-} from '../../app/actions/results.ts';
+} from '../../app/actions/results';
+
+const reducer = resultsReducer as Reducer<ReturnType<typeof resultsReducer>>;
 
 describe('results reducer', () => {
   it('has the expected initial state', () => {

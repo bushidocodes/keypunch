@@ -8,7 +8,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import Editor from '../../app/components/Editor';
-import { createTestStore, renderWithStore } from './testUtils.jsx';
+import { createTestStore, renderWithStore, type PreloadedTestState } from './testUtils';
 
 vi.mock('../../app/index', async () => {
   const { combineReducers, configureStore } = await import('@reduxjs/toolkit');
@@ -30,7 +30,7 @@ vi.mock('../../app/index', async () => {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function renderEditor(stateOverrides = {}) {
+function renderEditor(stateOverrides: PreloadedTestState = {}) {
   const store = createTestStore(stateOverrides);
   return { ...renderWithStore(<Editor />, { store }), store };
 }
@@ -45,14 +45,14 @@ describe('Editor', () => {
 
   it('passes current editorContent to the AceEditor shim', () => {
     renderEditor({ editor: { editorContent: 'IDENTIFICATION DIVISION.', editorPath: '' } });
-    const ta = screen.getByTestId('ace-editor-EDITOR');
+    const ta = screen.getByTestId('ace-editor-EDITOR') as HTMLTextAreaElement;
     expect(ta.value).toContain('IDENTIFICATION DIVISION.');
   });
 
   it('dispatches setEditorContent when onChange fires', () => {
     const store = createTestStore();
     renderWithStore(<Editor />, { store });
-    const ta = screen.getByTestId('ace-editor-EDITOR');
+    const ta = screen.getByTestId('ace-editor-EDITOR') as HTMLTextAreaElement;
     // The AceEditor mock is a readOnly textarea; simulate a change via fireEvent
     fireEvent.change(ta, { target: { value: 'PROCEDURE DIVISION.' } });
     // ace-stub mock doesn't wire onChange; Editor dispatches via react-ace's onChange prop

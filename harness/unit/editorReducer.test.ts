@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import reducer from '../../app/reducers/editor.ts';
-import { setEditorContent, setEditorPath } from '../../app/actions/editor.ts';
+import type { Reducer } from '@reduxjs/toolkit';
+import editorReducer from '../../app/reducers/editor';
+import { setEditorContent, setEditorPath } from '../../app/actions/editor';
+
+const reducer = editorReducer as Reducer<ReturnType<typeof editorReducer>>;
 
 describe('editor reducer', () => {
   it('has the expected initial state', () => {

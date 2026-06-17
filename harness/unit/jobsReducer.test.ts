@@ -1,19 +1,25 @@
 import { describe, it, expect } from 'vitest';
-import reducer from '../../app/reducers/jobs.ts';
-import { refreshJobs, loadJobResults } from '../../app/actions/jobs.ts';
+import type { Reducer } from '@reduxjs/toolkit';
+import jobsReducer from '../../app/reducers/jobs';
+import { refreshJobs, loadJobResults } from '../../app/actions/jobs';
+import type { Job } from '../../app/utils/jesParse';
 
-const JOB_A = {
+const reducer = jobsReducer as Reducer<ReturnType<typeof jobsReducer>>;
+
+const JOB_A: Job = {
   jobID: 'JOB00001',
   owner: 'IBMUSER',
   status: 'OUTPUT',
   numberOfSpoolFiles: '3',
+  fullString: 'IBMUSER JOB00001 OUTPUT 3 Spool Files',
 };
 
-const JOB_B = {
+const JOB_B: Job = {
   jobID: 'JOB00002',
   owner: 'IBMUSER',
   status: 'ACTIVE',
   numberOfSpoolFiles: '0',
+  fullString: 'IBMUSER JOB00002 ACTIVE',
 };
 
 describe('jobs reducer', () => {

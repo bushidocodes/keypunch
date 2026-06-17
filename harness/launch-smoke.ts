@@ -4,7 +4,7 @@
 // main process, preload, and renderer bundle load without a fatal error — then
 // terminate.
 //
-// Deeper GUI-journey coverage lives in the Playwright e2e (electronE2e.test.js),
+// Deeper GUI-journey coverage lives in the Playwright e2e (electronE2e.test.ts),
 // which drives the real UI against the mock JES server.
 //
 //   npm run smoke      # in harness/  (requires: `npm run build` done + a display)
@@ -55,8 +55,10 @@ setTimeout(() => {
   console.log(`PASS: app stayed up for ${UPTIME_MS}ms (booted without a fatal error). Terminating.`);
   if (process.platform === 'win32') {
     spawn('taskkill', ['/PID', String(child.pid), '/T', '/F']);
-  } else {
+  } else if (child.pid != null) {
     try { process.kill(-child.pid); } catch { child.kill('SIGKILL'); }
+  } else {
+    child.kill('SIGKILL');
   }
   setTimeout(() => process.exit(0), 1500);
 }, UPTIME_MS);

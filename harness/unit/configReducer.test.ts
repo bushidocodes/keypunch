@@ -1,12 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import reducer from '../../app/reducers/config.ts';
+import type { Reducer } from '@reduxjs/toolkit';
+import configReducer from '../../app/reducers/config';
 import {
   setHostName,
   setFtpPort,
   setFtpUserName,
   setFtpPassword,
   setFtpsEnabled,
-} from '../../app/actions/configForm.ts';
+} from '../../app/actions/configForm';
+
+// The reducer is typed to its own narrow action union; widen to a generic
+// Reducer here so the synthetic `@@INIT` / unknown actions the tests dispatch
+// typecheck (a real reducer must tolerate any action — that's the `default` arm).
+const reducer = configReducer as Reducer<ReturnType<typeof configReducer>>;
 
 describe('config reducer', () => {
   it('has the expected initial state', () => {

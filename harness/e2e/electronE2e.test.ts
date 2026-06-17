@@ -30,25 +30,26 @@
 // anchor index: 0=edit, 1=results, 2=explorer, 3=config.
 
 import { test, expect, _electron as electron } from '@playwright/test';
+import type { ElectronApplication, Page } from '@playwright/test';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
-import { createMockJesServer } from '../mock-server.js';
+import { createMockJesServer, type MockJesServer } from '../mock-server';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 // The `electron` package's default export is the path to the platform-correct
 // binary (electron.exe on Windows, `electron` on Linux/mac). Resolving it this
 // way keeps the e2e cross-platform: works locally on Windows and in CI on Linux
 // (xvfb). It resolves up to the repo-root node_modules/electron.
-const electronExe = createRequire(import.meta.url)('electron');
+const electronExe = createRequire(import.meta.url)('electron') as string;
 
-const NAV = { edit: 0, results: 1, explorer: 2, config: 3 };
+const NAV = { edit: 0, results: 1, explorer: 2, config: 3 } as const;
 
-let srv;
-let port;
-let electronApp;
-let win;
+let srv: MockJesServer;
+let port: number;
+let electronApp: ElectronApplication;
+let win: Page;
 
-const nav = (which) => win.locator('a').nth(NAV[which]).click();
+const nav = (which: keyof typeof NAV) => win.locator('a').nth(NAV[which]).click();
 
 test.beforeAll(async () => {
   srv = createMockJesServer();
@@ -66,7 +67,8 @@ test.beforeAll(async () => {
 
   // Stub native dialogs in main so confirmation message boxes auto-accept.
   await electronApp.evaluate(async ({ dialog }) => {
-    dialog.showMessageBox = async () => ({ response: 1 }); // always the "action" button
+    // Always resolve as the "action" button (index 1).
+    dialog.showMessageBox = (async () => ({ response: 1, checkboxChecked: false })) as typeof dialog.showMessageBox;
   });
 
   win = await electronApp.firstWindow();
@@ -80,13 +82,16 @@ test.afterAll(async () => {
 
 test('secure-model runtime assertions', async () => {
   // The renderer must be locked down: no Node, but the preload bridge present.
-  const exposes = await win.evaluate(() => ({
-    hasBridge: typeof window.keypunch === 'object' && window.keypunch !== null,
-    hasJes: !!(window.keypunch && window.keypunch.jes),
-    hasOpenFile: !!(window.keypunch && typeof window.keypunch.openFile === 'function'),
-    noRequire: typeof window.require === 'undefined',
-    noProcess: typeof window.process === 'undefined'
-  }));
+  const exposes = await win.evaluate(() => {
+    const w = window as typeof window & { require?: unknown; process?: unknown };
+    return {
+      hasBridge: typeof w.keypunch === 'object' && w.keypunch !== null,
+      hasJes: !!(w.keypunch && w.keypunch.jes),
+      hasOpenFile: !!(w.keypunch && typeof w.keypunch.openFile === 'function'),
+      noRequire: typeof w.require === 'undefined',
+      noProcess: typeof w.process === 'undefined'
+    };
+  });
   expect(exposes.hasBridge).toBe(true);
   expect(exposes.hasJes).toBe(true);
   expect(exposes.hasOpenFile).toBe(true);
@@ -95,8 +100,12 @@ test('secure-model runtime assertions', async () => {
 
   const secure = await electronApp.evaluate(async ({ BrowserWindow }) => {
     const w = BrowserWindow.getAllWindows()[0];
-    const wp = w.webContents.getLastWebPreferences();
-    return { contextIsolation: wp.contextIsolation, nodeIntegration: wp.nodeIntegration };
+    // getLastWebPreferences() is a runtime WebContents method that the current
+    // Electron type definitions no longer expose; cast to call it unchanged.
+    const wp = (w.webContents as unknown as {
+      getLastWebPreferences(): { contextIsolation?: boolean; nodeIntegration?: boolean } | null;
+    }).getLastWebPreferences();
+    return { contextIsolation: wp?.contextIsolation, nodeIntegration: wp?.nodeIntegration };
   });
   expect(secure.contextIsolation).toBe(true);
   expect(secure.nodeIntegration).toBe(false);

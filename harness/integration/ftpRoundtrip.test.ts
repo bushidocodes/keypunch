@@ -7,17 +7,17 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { Client } from 'basic-ftp';
 import { Writable, PassThrough } from 'stream';
-import { createMockJesServer } from '../mock-server.js';
+import { createMockJesServer } from '../mock-server';
 import { parseJobs, parseDatasets, parseMembers } from '../../app/utils/jesParse';
 
 const srv = createMockJesServer();
-let port;
+let port: number;
 
 beforeAll(async () => { port = await srv.listen(); });
 afterAll(async () => { await srv.close(); });
 beforeEach(() => { srv.reseed(); }); // reset to the baseline fixture before each test
 
-async function connect() {
+async function connect(): Promise<Client> {
   const client = new Client();
   await client.access({ host: '127.0.0.1', port, user: 'IBMUSER', password: 'secret', secure: false });
   return client;
@@ -25,10 +25,10 @@ async function connect() {
 
 // basic-ftp parses LIST into FileInfo objects; our renderer parsers expect raw
 // MVS listing strings.  Override parseList temporarily to capture raw lines.
-async function rawList(client) {
-  let rawLines = [];
+async function rawList(client: Client): Promise<string[]> {
+  let rawLines: string[] = [];
   const saved = client.parseList;
-  client.parseList = (raw) => {
+  client.parseList = (raw: string) => {
     rawLines = raw.split(/\r?\n/).filter(Boolean);
     return [];
   };
@@ -40,8 +40,8 @@ async function rawList(client) {
   return rawLines;
 }
 
-async function downloadToString(client, remotePath) {
-  const chunks = [];
+async function downloadToString(client: Client, remotePath: string): Promise<string> {
+  const chunks: Buffer[] = [];
   const dest = new Writable({ write(chunk, _, cb) { chunks.push(chunk); cb(); } });
   await client.downloadTo(dest, remotePath);
   return Buffer.concat(chunks).toString();
