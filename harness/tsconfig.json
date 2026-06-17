@@ -1,0 +1,29 @@
+{
+  // TypeScript config for the verification harness. Type-checking only
+  // (`tsc --noEmit`); vitest/playwright do the actual transpile via esbuild.
+  //
+  // Extends the root config for the strict compiler options, then swaps in the
+  // test-runtime ambient types. Importing app modules transitively type-checks
+  // them too — that's the point: the harness asserts against the SAME types the
+  // app ships, so an IPC-contract or reducer-shape drift surfaces here as a type
+  // error rather than slipping through to runtime.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    // `types` replaces (does not merge with) the root's, so re-list "node" and
+    // add vitest's globals (describe / it / expect / vi …). The jest-dom
+    // matchers (toBeInTheDocument, …) are pulled in by the
+    // `@testing-library/jest-dom/vitest` side-effect import in component/setup.ts.
+    "types": ["node", "vitest/globals"]
+  },
+  // app/keypunch.d.ts contributes the `Window.keypunch` IPC global AND the
+  // `/// <reference types="vite/client" />` that the transitively-imported app
+  // sources rely on (import.meta.env/hot + `*.css` module declarations), so the
+  // harness program type-checks app code exactly as the root tsconfig does.
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../app/keypunch.d.ts"
+  ],
+  "exclude": ["node_modules"]
+}

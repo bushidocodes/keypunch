@@ -11,6 +11,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DatasetTree } from '../../app/components/Explorer';
+import type { Dataset, Member } from '../../app/utils/jesParse';
 
 // Explorer.tsx -> jesFtp -> app/index (creates the Redux store singleton).
 // Mock app/index so the store singleton doesn't try to mount a React root or
@@ -51,8 +52,10 @@ vi.mock('../../app/utils/jesFtp', () => ({
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-const HELLO_MEMBER   = { name: 'HELLO',   attributes: { dsname: 'IBMUSER.JCL' } };
-const GOODBYE_MEMBER = { name: 'GOODBYE', attributes: { dsname: 'IBMUSER.JCL' } };
+// Minimal nodes — only the fields DatasetTree reads (name, attributes.dsname,
+// children). Cast since the full column-attribute set is irrelevant here.
+const HELLO_MEMBER   = { name: 'HELLO',   attributes: { dsname: 'IBMUSER.JCL' } } as Member;
+const GOODBYE_MEMBER = { name: 'GOODBYE', attributes: { dsname: 'IBMUSER.JCL' } } as Member;
 
 const sampleDatasets = [
   {
@@ -65,13 +68,13 @@ const sampleDatasets = [
     attributes: { dsname: 'IBMUSER.DATA' },
     children: [],
   },
-];
+] as unknown as Dataset[];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Click the tree-node row containing the given label text. */
-function clickNode(labelText) {
-  fireEvent.click(screen.getByText(labelText).closest('.tree-node'));
+function clickNode(labelText: string) {
+  fireEvent.click(screen.getByText(labelText).closest('.tree-node')!);
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -103,8 +106,8 @@ describe('DatasetTree', () => {
     expect(screen.getByText('GOODBYE')).toBeInTheDocument();
     // The toggle arrow should have flipped to ▾
     expect(
-      screen.getByText('IBMUSER.JCL').closest('.tree-node')
-        .querySelector('.tree-toggle').textContent
+      screen.getByText('IBMUSER.JCL').closest('.tree-node')!
+        .querySelector('.tree-toggle')!.textContent
     ).toBe('▾');
   });
 
@@ -120,7 +123,7 @@ describe('DatasetTree', () => {
     clickNode('IBMUSER.JCL');
     // IBMUSER.DATA has no members but its toggle should still be ▸
     const dataNode = screen.getByText('IBMUSER.DATA').closest('.tree-node');
-    expect(dataNode.querySelector('.tree-toggle').textContent).toBe('▸');
+    expect(dataNode!.querySelector('.tree-toggle')!.textContent).toBe('▸');
   });
 
   it('calls onSelectMember with the clicked member object', () => {

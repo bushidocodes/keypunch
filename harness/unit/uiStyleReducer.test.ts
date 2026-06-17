@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import reducer from '../../app/reducers/uiStyle.ts';
-import { setThemeDark, setThemeLight } from '../../app/actions/uiStyle.ts';
+import type { Reducer } from '@reduxjs/toolkit';
+import uiStyleReducer from '../../app/reducers/uiStyle';
+import { setThemeDark, setThemeLight } from '../../app/actions/uiStyle';
+
+const reducer = uiStyleReducer as Reducer<ReturnType<typeof uiStyleReducer>>;
 
 describe('uiStyle action creators', () => {
   it('setThemeDark / setThemeLight return the expected actions', () => {

@@ -11,7 +11,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import Results from '../../app/components/Results';
-import { createTestStore, renderWithStore } from './testUtils.jsx';
+import { createTestStore, renderWithStore, type PreloadedTestState } from './testUtils';
 
 vi.mock('../../app/index', async () => {
   const { combineReducers, configureStore } = await import('@reduxjs/toolkit');
@@ -64,7 +64,7 @@ const JOB_BETA = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function renderResults(stateOverrides = {}) {
+function renderResults(stateOverrides: PreloadedTestState = {}) {
   const store = createTestStore(stateOverrides);
   return { ...renderWithStore(<Results />, { store }), store };
 }
@@ -156,7 +156,7 @@ describe('Results', () => {
       const jobWithResults = { ...JOB_ALPHA, results: '//STEP001 RC=0000\nHELLO MAINFRAME' };
       renderResults({ jobs: { JOB00001: jobWithResults } });
       // The AceEditor mock renders a <textarea data-testid="ace-editor-RESULTS">
-      const editor = screen.getByTestId('ace-editor-RESULTS');
+      const editor = screen.getByTestId('ace-editor-RESULTS') as HTMLTextAreaElement;
       expect(editor).toBeInTheDocument();
       expect(editor.value).toContain('HELLO MAINFRAME');
     });

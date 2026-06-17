@@ -8,7 +8,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import App from '../../app/components/App';
-import { createTestStore, renderWithStore } from './testUtils.jsx';
+import { createTestStore, renderWithStore, type PreloadedTestState } from './testUtils';
 
 vi.mock('../../app/index', async () => {
   const { combineReducers, configureStore } = await import('@reduxjs/toolkit');
@@ -53,7 +53,7 @@ vi.mock('../../app/utils/nativeDialogs', () => ({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function renderApp(stateOverrides = {}, initialPath = '/editor') {
+function renderApp(stateOverrides: PreloadedTestState = {}, initialPath = '/editor') {
   const store = createTestStore(stateOverrides);
   const ui = (
     <MemoryRouter initialEntries={[initialPath]}>

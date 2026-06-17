@@ -19,7 +19,7 @@ interface DatasetTreeProps {
 }
 
 // Exported as a named export so it can be unit-tested in isolation (see
-// harness/component/DatasetTree.test.jsx). The default export is the full
+// harness/component/DatasetTree.test.tsx). The default export is the full
 // Redux-connected Explorer panel.
 export function DatasetTree({ datasets, onSelectMember }: DatasetTreeProps) {
   // Track which dataset names are expanded.

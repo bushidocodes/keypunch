@@ -3,11 +3,35 @@
 // `makeFixture()` returns a fresh, independent copy every call so the server's
 // `reseed()` can reset to a known baseline before each test/run. The row
 // strings below are exactly what the server emits over a `LIST`, shaped to
-// match what `app/utils/jesParse.js` parses (space-delimited columns; dataset
+// match what `app/utils/jesParse.ts` parses (space-delimited columns; dataset
 // and member listings carry a header row that the parser discards; the JES job
 // queue has no header).
 
-export function makeFixture() {
+// The mutable in-memory state the mock server keeps for a run. Everything is a
+// plain string or string map because it mirrors the raw text the real
+// mainframe streams back over FTP.
+export interface Fixture {
+  /** Owner stamped onto jobs created by a SUBMIT (STOR) in JES mode. */
+  submitOwner: string;
+  /** Next submitted job number; JOB00100, then JOB00101, … (reset on reseed). */
+  jobCounter: number;
+  /** JES held queue, keyed by job ID → the raw LIST row for that job. */
+  jobs: Record<string, string>;
+  /** Spool output returned by `RETR <jobID>.x`, keyed by job ID. */
+  jobOutputs: Record<string, string>;
+  /** Header row the SEQ dataset listing emits (dropped by the parser). */
+  datasetHeader: string;
+  /** Raw dataset LIST rows (one per dataset). */
+  datasets: string[];
+  /** Header row the member listing emits (dropped by the parser). */
+  memberHeader: string;
+  /** Member LIST rows per dataset name. */
+  members: Record<string, string[]>;
+  /** Member content returned by `RETR <member>`, keyed by dataset then member. */
+  memberContents: Record<string, Record<string, string>>;
+}
+
+export function makeFixture(): Fixture {
   return {
     // Owner stamped onto jobs created by a SUBMIT (STOR) in JES mode.
     submitOwner: 'IBMUSER',

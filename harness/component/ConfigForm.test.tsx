@@ -12,7 +12,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ConfigForm from '../../app/components/ConfigForm';
-import { createTestStore, renderWithStore } from './testUtils.jsx';
+import { createTestStore, renderWithStore } from './testUtils';
 
 vi.mock('../../app/index', async () => {
   const { combineReducers, configureStore } = await import('@reduxjs/toolkit');
@@ -129,7 +129,7 @@ describe('ConfigForm', () => {
     });
 
     it('can switch back to dark theme', () => {
-      const store = createTestStore({ uiStyle: { theme: 'light', color: 'cc7f29' } });
+      const store = createTestStore({ uiStyle: { theme: 'light' } });
       renderWithStore(<ConfigForm />, { store });
       fireEvent.click(screen.getByRole('radio', { name: /Dark/i }));
       expect(store.getState().uiStyle.theme).toBe('dark');

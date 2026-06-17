@@ -10,8 +10,8 @@ import Indicator from '../../app/components/Indicator';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function circle(container) {
-  return container.querySelector('svg circle');
+function circle(container: HTMLElement): Element {
+  return container.querySelector('svg circle')!;
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

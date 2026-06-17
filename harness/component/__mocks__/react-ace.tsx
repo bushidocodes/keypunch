@@ -4,7 +4,14 @@
 // can assert on content without importing any of the ace-builds machinery.
 import { createElement } from 'react';
 
-export default function AceEditor({ value, name }) {
+// Only the props the tests read are typed; the real AceEditor accepts many
+// more (mode, theme, width, …) which callers pass and this shim ignores.
+interface AceEditorProps {
+  value?: string;
+  name?: string;
+}
+
+export default function AceEditor({ value, name }: AceEditorProps) {
   return createElement('textarea', {
     'data-testid': `ace-editor-${name ?? ''}`,
     readOnly: true,

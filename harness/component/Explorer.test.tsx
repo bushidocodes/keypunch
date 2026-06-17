@@ -10,7 +10,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import Explorer from '../../app/components/Explorer';
-import { createTestStore, renderWithStore } from './testUtils.jsx';
+import { createTestStore, renderWithStore, type PreloadedTestState } from './testUtils';
+import type { Dataset } from '../../app/utils/jesParse';
 
 vi.mock('../../app/index', async () => {
   const { combineReducers, configureStore } = await import('@reduxjs/toolkit');
@@ -48,6 +49,8 @@ vi.mock('../../app/utils/jesFtp', () => ({
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
+// Minimal tree shape — only the fields DatasetTree/Explorer read. Cast to
+// Dataset[] since the full column-attribute set is irrelevant here.
 const SAMPLE_DATASETS = [
   {
     name: 'IBMUSER.SOURCE',
@@ -57,11 +60,11 @@ const SAMPLE_DATASETS = [
       { name: 'WORLD', attributes: { dsname: 'IBMUSER.SOURCE' } },
     ],
   },
-];
+] as unknown as Dataset[];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function renderExplorer(stateOverrides = {}) {
+function renderExplorer(stateOverrides: PreloadedTestState = {}) {
   const store = createTestStore(stateOverrides);
   return { ...renderWithStore(<Explorer />, { store }), store };
 }
@@ -102,7 +105,7 @@ describe('Explorer', () => {
 
   it('passes explorerContent to the AceEditor shim', () => {
     renderExplorer({ explorer: { explorerContent: 'COBOL SOURCE HERE' } });
-    const ta = screen.getByTestId('ace-editor-EXPLORER');
+    const ta = screen.getByTestId('ace-editor-EXPLORER') as HTMLTextAreaElement;
     expect(ta.value).toBe('COBOL SOURCE HERE');
   });
 });

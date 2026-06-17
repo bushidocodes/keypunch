@@ -7,7 +7,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import StatusBar from '../../app/components/StatusBar';
-import { createTestStore, renderWithStore } from './testUtils.jsx';
+import { createTestStore, renderWithStore, type PreloadedTestState } from './testUtils';
 
 vi.mock('../../app/index', async () => {
   const { combineReducers, configureStore } = await import('@reduxjs/toolkit');
@@ -55,7 +55,7 @@ vi.mock('../../app/utils/nativeDialogs', () => ({
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Render StatusBar with partial results state overrides. */
-function renderStatusBar(resultsOverrides = {}) {
+function renderStatusBar(resultsOverrides: NonNullable<PreloadedTestState['results']> = {}) {
   const store = createTestStore({ results: resultsOverrides });
   return { ...renderWithStore(<StatusBar />, { store }), store };
 }

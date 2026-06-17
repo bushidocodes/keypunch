@@ -2,6 +2,9 @@ import { resolve } from 'path';
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
 import react from '@vitejs/plugin-react';
 
+// `__dirname` is injected by Vite's config loader (esbuild bundles this file to
+// CJS and defines __dirname/__filename), so it is available even though the root
+// package.json declares "type": "module".
 const appDir = resolve(__dirname, 'app');
 
 export default defineConfig({

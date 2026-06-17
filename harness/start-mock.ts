@@ -4,7 +4,7 @@
 //   npm run mock        # in harness/  (default port 2121)
 //   MOCK_PORT=2100 npm run mock
 
-import { createMockJesServer } from './mock-server.js';
+import { createMockJesServer } from './mock-server';
 
 const PORT = Number(process.env.MOCK_PORT || 2121);
 const srv = createMockJesServer();

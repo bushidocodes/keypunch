@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import reducer from '../../app/reducers/explorer.ts';
-import { setExplorerContent } from '../../app/actions/explorer.ts';
+import type { Reducer } from '@reduxjs/toolkit';
+import explorerReducer from '../../app/reducers/explorer';
+import { setExplorerContent } from '../../app/actions/explorer';
+
+const reducer = explorerReducer as Reducer<ReturnType<typeof explorerReducer>>;
 
 describe('explorer reducer', () => {
   it('has the expected initial state', () => {

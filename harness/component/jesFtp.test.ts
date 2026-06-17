@@ -1,7 +1,7 @@
 // Tests for the jesFtp.ts renderer-side JES client.
 //
 // Lives in component/ rather than unit/ because it needs the jsdom environment
-// (setup.js wires up window.keypunch there). No React rendering is involved.
+// (setup.ts wires up window.keypunch there). No React rendering is involved.
 //
 // Primary coverage: every JES operation clears errorMessage on success and
 // sets it on failure (PR #60 — "Clear JES error message on successful ops").
@@ -53,7 +53,7 @@ function errorMessage() {
 // The fixture data below satisfies the parsers that run on the bridge's return
 // value. parseJobs([]) throws, so pollJobs must return the known empty-queue
 // sentinel; parseDatasets([]) throws, so listDatasetsWithMembers must return at
-// least a header row. The setup.js stubs use [] / {} which don't parse cleanly.
+// least a header row. The setup.ts stubs use [] / {} which don't parse cleanly.
 const EMPTY_JES_QUEUE   = ['No jobs found on Held queue'];
 const DATASETS_HEADER   = ['Volume  Unit    Referred Ext Used Recfm Lrecl Blksz Dsorg  Dsname'];
 
@@ -61,8 +61,8 @@ describe('jesFtp — errorMessage cleared on success', () => {
   beforeEach(() => {
     seedError();
     // Override the two stubs whose default return values fail the parsers.
-    window.keypunch.jes.pollJobs.mockResolvedValue(EMPTY_JES_QUEUE);
-    window.keypunch.jes.listDatasetsWithMembers.mockResolvedValue({
+    vi.mocked(window.keypunch.jes.pollJobs).mockResolvedValue(EMPTY_JES_QUEUE);
+    vi.mocked(window.keypunch.jes.listDatasetsWithMembers).mockResolvedValue({
       datasetRows: DATASETS_HEADER,
       memberRowsByDs: {},
     });
@@ -113,44 +113,44 @@ describe('jesFtp — errorMessage set on failure', () => {
   });
 
   it('connect() sets errorMessage when the bridge throws', async () => {
-    window.keypunch.jes.connect.mockRejectedValueOnce(new Error('ECONNREFUSED 127.0.0.1:1'));
+    vi.mocked(window.keypunch.jes.connect).mockRejectedValueOnce(new Error('ECONNREFUSED 127.0.0.1:1'));
     await jes.connect();
     expect(errorMessage()).toMatch(/JES error:/);
     expect(errorMessage()).toContain('ECONNREFUSED');
   });
 
   it('pollJobStatus() sets errorMessage when the bridge throws', async () => {
-    window.keypunch.jes.pollJobs.mockRejectedValueOnce(new Error('timeout'));
+    vi.mocked(window.keypunch.jes.pollJobs).mockRejectedValueOnce(new Error('timeout'));
     await jes.pollJobStatus();
     expect(errorMessage()).toMatch(/JES error:.*timeout/);
   });
 
   it('submitJob() sets errorMessage when the bridge throws', async () => {
-    window.keypunch.jes.submitJob.mockRejectedValueOnce(new Error('not connected'));
+    vi.mocked(window.keypunch.jes.submitJob).mockRejectedValueOnce(new Error('not connected'));
     await jes.submitJob('//JCL');
     expect(errorMessage()).toMatch(/JES error:/);
   });
 
   it('deleteJob() sets errorMessage when the bridge throws', async () => {
-    window.keypunch.jes.deleteJob.mockRejectedValueOnce(new Error('job not found'));
+    vi.mocked(window.keypunch.jes.deleteJob).mockRejectedValueOnce(new Error('job not found'));
     await jes.deleteJob('JOB99999');
     expect(errorMessage()).toMatch(/JES error:/);
   });
 
   it('retrieveJob() sets errorMessage when the bridge throws', async () => {
-    window.keypunch.jes.retrieveJob.mockRejectedValueOnce(new Error('spool missing'));
+    vi.mocked(window.keypunch.jes.retrieveJob).mockRejectedValueOnce(new Error('spool missing'));
     await jes.retrieveJob('JOB00045');
     expect(errorMessage()).toMatch(/JES error:/);
   });
 
   it('listDatasets() sets errorMessage when the bridge throws', async () => {
-    window.keypunch.jes.listDatasetsWithMembers.mockRejectedValueOnce(new Error('session expired'));
+    vi.mocked(window.keypunch.jes.listDatasetsWithMembers).mockRejectedValueOnce(new Error('session expired'));
     await jes.listDatasets();
     expect(errorMessage()).toMatch(/JES error:/);
   });
 
   it('retrieveMember() sets errorMessage when the bridge throws', async () => {
-    window.keypunch.jes.retrieveMember.mockRejectedValueOnce(new Error('member not found'));
+    vi.mocked(window.keypunch.jes.retrieveMember).mockRejectedValueOnce(new Error('member not found'));
     await jes.retrieveMember('IBMUSER.SOURCE', 'MISSING');
     expect(errorMessage()).toMatch(/JES error:/);
   });
@@ -161,7 +161,7 @@ describe('jesFtp — errorMessage set on failure', () => {
 describe('jesFtp — failure preserves prior error context', () => {
   it('a failed op overwrites (not clears) the previous error', async () => {
     store.dispatch(setErrorMessage('first error'));
-    window.keypunch.jes.connect.mockRejectedValueOnce(new Error('second error'));
+    vi.mocked(window.keypunch.jes.connect).mockRejectedValueOnce(new Error('second error'));
     await jes.connect();
     expect(errorMessage()).toMatch(/second error/);
     expect(errorMessage()).not.toBe('');

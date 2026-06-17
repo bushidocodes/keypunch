@@ -1,11 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import reducer from '../../app/reducers/datasets.ts';
-import { refreshDatasets } from '../../app/actions/datasets.ts';
+import type { Reducer } from '@reduxjs/toolkit';
+import datasetsReducer from '../../app/reducers/datasets';
+import { refreshDatasets } from '../../app/actions/datasets';
+import type { Dataset } from '../../app/utils/jesParse';
 
+const reducer = datasetsReducer as Reducer<ReturnType<typeof datasetsReducer>>;
+
+// Minimal tree nodes — only the fields these tests assert on. Cast to Dataset
+// since the full column-attribute set is irrelevant to reducer behaviour.
 const SAMPLE_DATASETS = [
   { name: 'IBMUSER.SOURCE', attributes: { dsname: 'IBMUSER.SOURCE' }, children: [] },
   { name: 'IBMUSER.LOAD',   attributes: { dsname: 'IBMUSER.LOAD'   }, children: [] },
-];
+] as unknown as Dataset[];
 
 describe('datasets reducer', () => {
   it('has the expected initial state (empty array)', () => {

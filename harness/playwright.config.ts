@@ -6,8 +6,8 @@ import { defineConfig } from '@playwright/test';
 // needed — `_electron.launch` uses the app's own Electron binary.
 export default defineConfig({
   testDir: './e2e',
-  testMatch: '**/*.test.js',
-  globalSetup: './e2e/global-setup.js',
+  testMatch: '**/*.test.ts',
+  globalSetup: './e2e/global-setup.ts',
   timeout: 60000,
   expect: { timeout: 15000 },
   fullyParallel: false,

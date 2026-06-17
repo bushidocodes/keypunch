@@ -19,9 +19,9 @@ export default defineConfig({
     environment: 'node',
 
     include: [
-      'unit/**/*.test.js',
-      'integration/**/*.test.js',
-      'component/**/*.test.{js,jsx,ts,tsx}',
+      'unit/**/*.test.ts',
+      'integration/**/*.test.ts',
+      'component/**/*.test.{ts,tsx}',
     ],
 
     // Component tests run in jsdom so React can render into a simulated DOM.
@@ -31,7 +31,7 @@ export default defineConfig({
 
     // Setup runs before every test file in both environments.
     // The file itself guards browser-only code with `typeof window !== 'undefined'`.
-    setupFiles: ['./component/setup.js'],
+    setupFiles: ['./component/setup.ts'],
 
     // Expose vitest globals (describe, it, expect, vi, beforeEach, afterEach, …)
     // without explicit imports.  Required for @testing-library/react's
@@ -73,14 +73,14 @@ export default defineConfig({
       // ('…/utils/react-ace') after the package was inlined.
       {
         find: /.*react-ace$/,
-        replacement: resolve(__dirname, 'component/__mocks__/react-ace.js'),
+        replacement: resolve(__dirname, 'component/__mocks__/react-ace.tsx'),
       },
       // Stub out ace-builds and all its sub-paths
       // (e.g. ace-builds/src-noconflict/mode-java).  The .* suffix in the
       // regex replaces the ENTIRE specifier, not just the 'ace-builds' prefix.
       {
         find: /^ace-builds.*/,
-        replacement: resolve(__dirname, 'component/__mocks__/ace-stub.js'),
+        replacement: resolve(__dirname, 'component/__mocks__/ace-stub.ts'),
       },
     ],
   },
