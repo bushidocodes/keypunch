@@ -465,14 +465,19 @@ function buildMenu(): void {
         { role: 'quit' }
       ]
     });
-    // template[1] exists: built with 4 items above, then unshift added one more.
-    (template[1]!.submenu as MenuItemConstructorOptions[]).push(
-      { type: 'separator' },
-      {
-        label: 'Speech',
-        submenu: [{ role: 'startSpeaking' }, { role: 'stopSpeaking' }]
-      }
-    );
+    // Add the macOS Speech submenu to the Edit menu. Find it by label rather
+    // than index: the unshift above shifted every position, and the previous
+    // hardcoded index (template[1]) pointed Speech at the File menu by mistake.
+    const editMenu = template.find((item) => item.label === 'Edit');
+    if (editMenu) {
+      (editMenu.submenu as MenuItemConstructorOptions[]).push(
+        { type: 'separator' },
+        {
+          label: 'Speech',
+          submenu: [{ role: 'startSpeaking' }, { role: 'stopSpeaking' }]
+        }
+      );
+    }
   }
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
