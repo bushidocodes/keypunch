@@ -81,11 +81,11 @@ export function parseJobs(results: string[] | null | undefined): JobMap {
   const jobs: JobMap = {};
   results.forEach((job) => {
     const jobSplit = job.trim().split(/ +/);
-    const jobID = jobSplit[1];
+    const jobID = jobSplit[1] ?? '';
     jobs[jobID] = {
-      owner: jobSplit[0],
-      status: jobSplit[2],
-      numberOfSpoolFiles: job.includes('Spool Files') ? jobSplit[3] : null,
+      owner: jobSplit[0] ?? '',
+      status: jobSplit[2] ?? '',
+      numberOfSpoolFiles: job.includes('Spool Files') ? (jobSplit[3] ?? null) : null,
       jobID,
       fullString: job.trim()
     };
@@ -104,7 +104,11 @@ export function parseDatasets(results: string[] | null | undefined): Dataset[] {
   const rows = results.slice(1); // drop the header row
   return rows.map((dataset) => {
     const datasetSplit = dataset.trim().split(/ +/);
-    const [volume, unit, referred, ext, used, recfm, lrecl, blksz, dsorg, dsname] = datasetSplit;
+    // Destructuring defaults cover short/ragged rows (mirrors parseMembers' `|| ''`).
+    const [
+      volume = '', unit = '', referred = '', ext = '', used = '',
+      recfm = '', lrecl = '', blksz = '', dsorg = '', dsname = ''
+    ] = datasetSplit;
     return {
       name: dsname,
       toggled: false,

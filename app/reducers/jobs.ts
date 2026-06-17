@@ -1,5 +1,5 @@
 import { REFRESH_JOBS, LOAD_JOB_RESULTS } from '../constants';
-import type { Job, JobMap } from '../utils/jesParse';
+import type { Job } from '../utils/jesParse';
 import type { JobsAction } from '../actions/jobs';
 
 // State is a hashmap keyed by job ID. Each value is a Job record enriched with
@@ -18,20 +18,21 @@ export default function jobs(
       // Replace the jobs state with the incoming snapshot so stale jobs
       // (deleted on the server) are removed, while preserving any downloaded
       // results for jobs that are still present in the queue.
-      const incoming = action.jobsState as JobMap;
+      const incoming = action.jobsState;
       const next: JobsState = {};
       for (const [id, job] of Object.entries(incoming)) {
         const existingResults = state[id]?.results;
         next[id] = existingResults !== undefined
-          ? { ...(job as Job), results: existingResults }
-          : { ...(job as Job) };
+          ? { ...job, results: existingResults }
+          : { ...job };
       }
       return next;
     }
     case LOAD_JOB_RESULTS: {
       const updated = { ...state };
-      if (updated[action.jobID]) {
-        updated[action.jobID] = { ...updated[action.jobID], results: action.results };
+      const existing = updated[action.jobID];
+      if (existing) {
+        updated[action.jobID] = { ...existing, results: action.results };
       }
       return updated;
     }

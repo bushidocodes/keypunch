@@ -10,6 +10,10 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "noEmit": true,
+    // Tests do a lot of `arr[0].foo` / `record[key]` indexing where the shape is
+    // known from the fixture; the `undefined` the root's noUncheckedIndexedAccess
+    // would add is just noise here, so relax it for the harness.
+    "noUncheckedIndexedAccess": false,
     // `types` replaces (does not merge with) the root's, so re-list "node" and
     // add vitest's globals (describe / it / expect / vi …). The jest-dom
     // matchers (toBeInTheDocument, …) are pulled in by the

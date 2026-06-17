@@ -61,7 +61,7 @@ function Results(props: Props) {
   const activeJobID: string | null =
     selectedJobID && props.jobs[selectedJobID]
       ? selectedJobID
-      : (jobIDs.length > 0 ? jobIDs[0] : null);
+      : (jobIDs[0] ?? null);
 
   if (jobIDs.length === 0) {
     return (
@@ -73,7 +73,7 @@ function Results(props: Props) {
     );
   }
 
-  const activeJob: JobEntry | null = activeJobID ? props.jobs[activeJobID] : null;
+  const activeJob: JobEntry | null = activeJobID ? (props.jobs[activeJobID] ?? null) : null;
 
   return (
     <div className="results">
