@@ -105,9 +105,12 @@ jobs:
       - name: Build app
         run: pnpm build
       # Electron's Chromium needs the same system libraries Playwright's chromium does.
+      # Use the direct binary path (not pnpm exec) to avoid pnpm workspace resolution
+      # changing the PLAYWRIGHT_BROWSERS_PATH context and triggering a browser download.
       - name: Install Electron/Chromium system libraries
-        run: pnpm exec playwright install-deps chromium
-        working-directory: harness
+        run: node_modules/.bin/playwright install-deps chromium
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       - name: Install xvfb
         run: sudo apt-get update && sudo apt-get install -y xvfb
       - name: Run Playwright e2e under xvfb
