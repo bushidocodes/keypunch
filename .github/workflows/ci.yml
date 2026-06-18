@@ -107,8 +107,10 @@ jobs:
       # Electron's Chromium needs the same system libraries Playwright's chromium does.
       # Use the direct binary path (not pnpm exec) to avoid pnpm workspace resolution
       # changing the PLAYWRIGHT_BROWSERS_PATH context and triggering a browser download.
+      # pnpm workspace puts harness devDep binaries in harness/node_modules/.bin/, not root.
       - name: Install Electron/Chromium system libraries
         run: node_modules/.bin/playwright install-deps chromium
+        working-directory: harness
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       - name: Install xvfb
