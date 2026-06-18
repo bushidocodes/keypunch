@@ -69,6 +69,7 @@
     "email": "spmcbride1201@gmail.com",
     "url": "https://github.com/spmcbride1201"
   },
+  "packageManager": "pnpm@11.5.0",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/bushidocodes/keypunch/issues"
@@ -103,9 +104,5 @@
     "react-dom": "^19.2.7",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.17.0"
-  },
-  "allowScripts": {
-    "electron-winstaller@5.4.0": true,
-    "esbuild@0.25.12": true
   }
 }

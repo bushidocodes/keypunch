@@ -14,41 +14,41 @@
 ## Development
 
 ```bash
-npm install        # install all deps (downloads Electron binary)
-npm run dev        # hot-reload dev mode (electron-vite)
-npm run build      # production build → out/
-npm run typecheck  # tsc --noEmit
-npm run lint       # ESLint flat config
+pnpm install       # install all deps (downloads Electron binary)
+pnpm dev           # hot-reload dev mode (electron-vite)
+pnpm build         # production build → out/
+pnpm typecheck     # tsc --noEmit
+pnpm lint          # ESLint flat config
 ```
 
 For faster lint/typecheck without downloading the Electron binary:
 
 ```bash
-ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm install
+ELECTRON_SKIP_BINARY_DOWNLOAD=1 pnpm install
 ```
 
 ## Testing
 
-Tests live in `harness/`. Install harness deps separately:
+Tests live in `harness/`. The harness is a pnpm workspace package, so root `pnpm install` installs its deps automatically — no separate install step needed:
 
 ```bash
-cd harness && npm ci
-npm run typecheck  # tsc --noEmit over the harness (+ the app modules it imports)
-npm test           # vitest unit + integration (mock FTP/JES)
-npm run e2e        # Playwright _electron GUI tests (needs built app + xvfb on Linux)
+cd harness
+pnpm typecheck     # tsc --noEmit over the harness (+ the app modules it imports)
+pnpm test          # vitest unit + integration (mock FTP/JES)
+pnpm e2e           # Playwright _electron GUI tests (needs built app + xvfb on Linux)
 ```
 
 The whole harness is TypeScript. It has its own `harness/tsconfig.json` (extends the
-root config, adds vitest globals); `npm run typecheck` there also transitively
+root config, adds vitest globals); `pnpm typecheck` there also transitively
 type-checks the `app/` modules the tests import, so an IPC-contract or reducer-shape
 change that breaks a test surfaces as a type error.
 
 Run e2e from repo root:
 
 ```bash
-npm run build
-cd harness && xvfb-run -a npm run e2e   # Linux
-cd harness && npm run e2e               # macOS / Windows
+pnpm build
+cd harness && xvfb-run -a pnpm e2e     # Linux
+cd harness && pnpm e2e                  # macOS / Windows
 ```
 
 ## Release / packaging
@@ -59,10 +59,10 @@ Installers are produced by **electron-builder**. The build config lives under th
 
 | Script | Output |
 |---|---|
-| `npm run package-mac` | `release/*.dmg` (macOS) |
-| `npm run package-win` | `release/*.exe` NSIS installer (Windows x64) |
-| `npm run package-linux` | `release/*.AppImage` + `release/*.deb` (Linux x64) |
-| `npm run package-all` | All three platforms in one pass |
+| `pnpm package-mac` | `release/*.dmg` (macOS) |
+| `pnpm package-win` | `release/*.exe` NSIS installer (Windows x64) |
+| `pnpm package-linux` | `release/*.AppImage` + `release/*.deb` (Linux x64) |
+| `pnpm package-all` | All three platforms in one pass |
 
 > Each script runs `electron-vite build` first, so you don't need a separate `npm run build` step.
 
@@ -78,9 +78,9 @@ Installers are produced by **electron-builder**. The build config lives under th
 
 `.github/workflows/package.yml` triggers on `v*` tags and `workflow_dispatch`. It runs three parallel jobs on native runners:
 
-- **ubuntu-latest** → `npm run package-linux` → smoke-launches the AppImage under `xvfb-run`
-- **windows-latest** → `npm run package-win` → validates the NSIS installer PE header
-- **macos-latest** → `npm run package-mac` → mounts the DMG and verifies the app bundle
+- **ubuntu-latest** → `pnpm package-linux` → smoke-launches the AppImage under `xvfb-run`
+- **windows-latest** → `pnpm package-win` → validates the NSIS installer PE header
+- **macos-latest** → `pnpm package-mac` → mounts the DMG and verifies the app bundle
 
 All artifacts are uploaded to the GitHub Actions run for download.
 

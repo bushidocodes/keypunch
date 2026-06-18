@@ -28,23 +28,23 @@ z/OS FTP/JES server plus unit, integration, and Playwright GUI-e2e tests. All of
 
 ```bash
 cd harness
-npm install        # modern Node (>=18)
-npm run typecheck  # tsc --noEmit over the harness (+ the app modules it imports)
-npm test           # vitest: unit + integration + component (125 tests)
+# deps are installed by the root `pnpm install` (harness is a workspace package)
+pnpm typecheck     # tsc --noEmit over the harness (+ the app modules it imports)
+pnpm test          # vitest: unit + integration + component (125 tests)
 
-# GUI e2e — requires the app to be built first (repo root: npm run build):
-npm run e2e        # Playwright _electron: render + secure-model + core journey
+# GUI e2e — requires the app to be built first (repo root: pnpm build):
+pnpm e2e           # Playwright _electron: render + secure-model + core journey
 
-npm run smoke      # boot-only check of the built app
+pnpm smoke         # boot-only check of the built app
 ```
 
 ## Manual GUI smoke checklist
 
 For a hands-on pass, drive the real app against the mock:
 
-1. Build the app: from the repo root, `npm run build`.
-2. Start the mock server: `cd harness && npm run mock` (prints the host/port to use).
-3. Launch the app: from the repo root, `npm start` (or `harness && npm run smoke` for a boot-only check).
+1. Install deps and build: from the repo root, `pnpm install && pnpm build`.
+2. Start the mock server: `cd harness && pnpm mock` (prints the host/port to use).
+3. Launch the app: from the repo root, `pnpm start` (or `cd harness && pnpm smoke` for a boot-only check).
 4. Walk the core journey (reseed = restart `npm run mock` for a clean queue):
    - [ ] **App launches**, main window visible, no errors in the dev console.
    - [ ] **Editor**: type some JCL/source; switch panes and back — content persists.
