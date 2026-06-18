@@ -23,7 +23,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '22'
           cache: pnpm
       # Linting doesn't need the Electron binary; skip it to keep this job fast.
       - run: pnpm install
@@ -39,7 +39,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '22'
           cache: pnpm
       # Typechecking doesn't need the Electron binary; skip it to keep this job fast.
       - run: pnpm install
@@ -58,7 +58,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '22'
           cache: pnpm
       # pnpm workspace install covers root + harness in one pass.
       # React resolves from root node_modules — single shared instance, no duplicate hooks.
@@ -78,7 +78,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '22'
           cache: pnpm
       # The Electron binary download is not needed just to build; skip it to keep CI fast.
       - run: pnpm install
@@ -96,7 +96,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '22'
           cache: pnpm
       # Root install DOES download the Electron binary — the e2e launches the real app.
       # pnpm workspace install covers root + harness in one pass.
