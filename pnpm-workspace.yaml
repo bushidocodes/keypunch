@@ -1,0 +1,6 @@
+packages:
+  - 'harness'
+
+allowBuilds:
+  electron-winstaller: true
+  esbuild: true

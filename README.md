@@ -29,21 +29,21 @@ one lockfile.
 Requires a current Node LTS (developed/verified on Node 24).
 
 ```bash
-npm install        # installs deps + downloads the Electron binary
-npm run dev        # electron-vite dev server (Vite renderer + main/preload), launches the app
+pnpm install       # installs deps + downloads the Electron binary
+pnpm dev           # electron-vite dev server (Vite renderer + main/preload), launches the app
 ```
 
 To build and run the production bundle:
 
 ```bash
-npm run build      # electron-vite -> out/{main,preload,renderer}
-npm start          # electron-vite preview of the built app
+pnpm build         # electron-vite -> out/{main,preload,renderer}
+pnpm start         # electron-vite preview of the built app
 ```
 
 Notes:
 * The app renders fully offline; **SUBMIT/LOAD require a z/OS FTP endpoint** configured in the
   Config pane. The [verification harness](harness/) ships a mock z/OS FTP/JES server for testing
-  (`cd harness && npm run mock`).
+  (`cd harness && pnpm mock`).
 * UI stack is **React 18 + Redux Toolkit + React Router 6** with plain-CSS components (the
   abandoned react-desktop was removed). TypeScript is being adopted incrementally
   (`allowJs`, so `.js` and `.ts` coexist). All modernization phases are complete — see the
@@ -51,7 +51,7 @@ Notes:
 
 ## Running / troubleshooting
 
-**Always launch via the npm scripts (`npm run dev` or `npm start`) — don't run the `electron`
+**Always launch via the pnpm scripts (`pnpm dev` or `pnpm start`) — don't run the `electron`
 binary directly.** electron-vite compiles the main/preload/renderer bundles and wires up the
 app paths for you. The build output (`out/`) is gitignored, so a bare `electron .` has no
 `main` to load and will fail.
@@ -60,11 +60,11 @@ Common errors from invoking Electron by hand:
 
 | Dialog | Cause | Fix |
 |--------|-------|-----|
-| `Unable to find Electron app at …` / `Cannot find module '<repo path>'` | `electron .` with no build present (`out/main/main.js` missing) | Use `npm run dev`, or `npm start` (which builds, then previews) |
+| `Unable to find Electron app at …` / `Cannot find module '<repo path>'` | `electron .` with no build present (`out/main/main.js` missing) | Use `pnpm dev`, or `pnpm start` (which builds, then previews) |
 | `Cannot find module '…console.log(process.versions.chrome)'` (or any expression) | Electron has **no** `-e`/`--eval` flag like Node, so the string is treated as the app path | Don't eval through Electron — see *Checking versions* below |
 
 **Checking versions**
-* Electron: `npx electron --version` → `v42.x` (Electron 42 ships Chromium ~136 / Node ~22).
+* Electron: `pnpm exec electron --version` → `v42.x` (Electron 42 ships Chromium ~136 / Node ~22).
 * Chromium, from the running app: **View → Toggle Developer Tools**, then run
   `navigator.userAgent` in the console (shows `Chrome/136…`).
 * `process` is intentionally **absent from the renderer** — that's `contextIsolation` (the
@@ -76,7 +76,7 @@ Common errors from invoking Electron by hand:
 To package apps for the local platform:
 
 ```bash
-$ npm run package
+$ pnpm package
 ```
 
 To package apps for all platforms:
@@ -85,29 +85,29 @@ First, refer to [Multi Platform Build](https://github.com/electron-userland/elec
 
 Then,
 ```bash
-$ npm run package-all
+$ pnpm package-all
 ```
 
 To package apps with options:
 
 ```bash
-$ npm run package -- --[option]
+$ pnpm package -- --[option]
 ```
 
 ## Tests & lint
 
 ```bash
-npm run lint        # ESLint (flat config) over app/ + electron/ + harness/
-npm run typecheck   # tsc --noEmit (TypeScript; .js still allowed via allowJs)
+pnpm lint           # ESLint (flat config) over app/ + electron/ + harness/
+pnpm typecheck      # tsc --noEmit (TypeScript; .js still allowed via allowJs)
 ```
 
-The [verification harness](harness/) (separate workspace, runs on modern Node) holds the
-unit/integration tests and the Playwright GUI e2e:
+The [verification harness](harness/) (pnpm workspace package, runs on modern Node) holds the
+unit/integration tests and the Playwright GUI e2e — its deps are installed automatically by
+the root `pnpm install`:
 
 ```bash
-cd harness && npm install
-npm test           # vitest: jesParse + reducer unit tests, mock FTP/JES round-trip
-npm run e2e        # Playwright _electron GUI journey against the built app + mock server
+cd harness && pnpm test    # vitest: jesParse + reducer unit tests, mock FTP/JES round-trip
+cd harness && pnpm e2e     # Playwright _electron GUI journey against the built app + mock server
 ```
 
 CI (`.github/workflows/ci.yml`) runs all of these on every push/PR: **lint**, **typecheck**,

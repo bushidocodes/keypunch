@@ -20,30 +20,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: npm
+          node-version: '22'
+          cache: pnpm
       # Linting doesn't need the Electron binary; skip it to keep this job fast.
-      - run: npm install --no-audit --no-fund
+      - run: pnpm install
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
-      - run: npm run lint
+      - run: pnpm lint
 
   typecheck:
     name: Typecheck (tsc)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: npm
+          node-version: '22'
+          cache: pnpm
       # Typechecking doesn't need the Electron binary; skip it to keep this job fast.
-      - run: npm install --no-audit --no-fund
+      - run: pnpm install
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
-      - run: npm run typecheck
+      - run: pnpm typecheck
 
   harness-tests:
     name: Harness tests (vitest)
@@ -53,37 +55,36 @@ jobs:
         working-directory: harness
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: harness/package-lock.json
-      # Install root deps first so react / react-dom / react-redux resolve from
-      # the project root's node_modules — the component tests rely on a single
-      # shared copy of React rather than maintaining a separate one in harness/.
-      - name: Install root deps (no Electron binary)
-        run: npm install --no-audit --no-fund
+          node-version: '22'
+          cache: pnpm
+      # pnpm workspace install covers root + harness in one pass.
+      # React resolves from root node_modules — single shared instance, no duplicate hooks.
+      - name: Install all workspace deps (no Electron binary)
+        run: pnpm install
         working-directory: .
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm test
+      - run: pnpm typecheck
+      - run: pnpm test
 
   build:
     name: Build (electron-vite)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: npm
+          node-version: '22'
+          cache: pnpm
       # The Electron binary download is not needed just to build; skip it to keep CI fast.
-      - run: npm install --no-audit --no-fund
+      - run: pnpm install
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
-      - run: npm run build
+      - run: pnpm build
       - name: Verify build artifacts
         run: test -f out/main/main.cjs && test -f out/preload/preload.cjs && test -f out/renderer/index.html
 
@@ -92,24 +93,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: npm
+          node-version: '22'
+          cache: pnpm
       # Root install DOES download the Electron binary — the e2e launches the real app.
-      - name: Install root deps (incl. Electron binary)
-        run: npm install --no-audit --no-fund
+      # pnpm workspace install covers root + harness in one pass.
+      - name: Install all workspace deps (incl. Electron binary)
+        run: pnpm install
       - name: Build app
-        run: npm run build
-      - name: Install harness deps
-        run: npm ci
-        working-directory: harness
+        run: pnpm build
       # Electron's Chromium needs the same system libraries Playwright's chromium does.
+      # Use the direct binary path (not pnpm exec) to avoid pnpm workspace resolution
+      # changing the PLAYWRIGHT_BROWSERS_PATH context and triggering a browser download.
+      # pnpm workspace puts harness devDep binaries in harness/node_modules/.bin/, not root.
       - name: Install Electron/Chromium system libraries
-        run: npx playwright install-deps chromium
+        run: node_modules/.bin/playwright install-deps chromium
         working-directory: harness
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       - name: Install xvfb
         run: sudo apt-get update && sudo apt-get install -y xvfb
       - name: Run Playwright e2e under xvfb
-        run: xvfb-run -a npm run e2e
+        run: xvfb-run -a pnpm e2e
         working-directory: harness
