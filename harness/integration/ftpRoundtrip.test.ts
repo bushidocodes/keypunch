@@ -4,22 +4,38 @@
 // raw responses through the real parsers.  This exercises the full FTP
 // round-trip + parsing without needing the Electron GUI or the Redux store.
 
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { Client } from 'basic-ftp';
-import { Writable, PassThrough } from 'stream';
+import { PassThrough, Writable } from 'stream';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+  parseDatasets,
+  parseJobs,
+  parseMembers,
+} from '../../app/utils/jesParse';
 import { createMockJesServer } from '../mock-server';
-import { parseJobs, parseDatasets, parseMembers } from '../../app/utils/jesParse';
 
 const srv = createMockJesServer();
 let port: number;
 
-beforeAll(async () => { port = await srv.listen(); });
-afterAll(async () => { await srv.close(); });
-beforeEach(() => { srv.reseed(); }); // reset to the baseline fixture before each test
+beforeAll(async () => {
+  port = await srv.listen();
+});
+afterAll(async () => {
+  await srv.close();
+});
+beforeEach(() => {
+  srv.reseed();
+}); // reset to the baseline fixture before each test
 
 async function connect(): Promise<Client> {
   const client = new Client();
-  await client.access({ host: '127.0.0.1', port, user: 'IBMUSER', password: 'secret', secure: false });
+  await client.access({
+    host: '127.0.0.1',
+    port,
+    user: 'IBMUSER',
+    password: 'secret',
+    secure: false,
+  });
   return client;
 }
 
@@ -40,9 +56,17 @@ async function rawList(client: Client): Promise<string[]> {
   return rawLines;
 }
 
-async function downloadToString(client: Client, remotePath: string): Promise<string> {
+async function downloadToString(
+  client: Client,
+  remotePath: string
+): Promise<string> {
   const chunks: Buffer[] = [];
-  const dest = new Writable({ write(chunk, _, cb) { chunks.push(chunk); cb(); } });
+  const dest = new Writable({
+    write(chunk, _, cb) {
+      chunks.push(chunk);
+      cb();
+    },
+  });
   await client.downloadTo(dest, remotePath);
   return Buffer.concat(chunks).toString();
 }
@@ -57,7 +81,7 @@ describe('mock JES FTP round-trip', () => {
     const jobRows = await rawList(client);
     expect(jobRows).toEqual([
       'IBMUSER JOB00045 OUTPUT 3 Spool Files',
-      'IBMUSER JOB00046 ACTIVE'
+      'IBMUSER JOB00046 ACTIVE',
     ]);
     const jobs = parseJobs(jobRows);
     expect(jobs.JOB00045.status).toBe('OUTPUT');
@@ -84,7 +108,10 @@ describe('mock JES FTP round-trip', () => {
     // --- Explorer pane: list datasets ---
     await client.send('SITE FILETYPE=SEQ');
     const datasets = parseDatasets(await rawList(client));
-    expect(datasets.map((d) => d.name)).toEqual(['IBMUSER.SOURCE', 'IBMUSER.JCL']);
+    expect(datasets.map((d) => d.name)).toEqual([
+      'IBMUSER.SOURCE',
+      'IBMUSER.JCL',
+    ]);
 
     // --- Explorer: list members of a PDS ---
     await client.cd('IBMUSER.SOURCE');

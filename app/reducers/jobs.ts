@@ -1,6 +1,6 @@
-import { REFRESH_JOBS, LOAD_JOB_RESULTS } from '../constants';
-import type { Job } from '../utils/jesParse';
 import type { JobsAction } from '../actions/jobs';
+import { LOAD_JOB_RESULTS, REFRESH_JOBS } from '../constants';
+import type { Job } from '../utils/jesParse';
 
 // State is a hashmap keyed by job ID. Each value is a Job record enriched with
 // an optional `results` field that holds the downloaded spool output.
@@ -22,9 +22,10 @@ export default function jobs(
       const next: JobsState = {};
       for (const [id, job] of Object.entries(incoming)) {
         const existingResults = state[id]?.results;
-        next[id] = existingResults !== undefined
-          ? { ...job, results: existingResults }
-          : { ...job };
+        next[id] =
+          existingResults !== undefined
+            ? { ...job, results: existingResults }
+            : { ...job };
       }
       return next;
     }

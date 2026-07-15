@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
 import type { Reducer } from '@reduxjs/toolkit';
-import explorerReducer from '../../app/reducers/explorer';
+import { describe, expect, it } from 'vitest';
 import { setExplorerContent } from '../../app/actions/explorer';
+import explorerReducer from '../../app/reducers/explorer';
 
 const reducer = explorerReducer as Reducer<ReturnType<typeof explorerReducer>>;
 
@@ -13,7 +13,10 @@ describe('explorer reducer', () => {
 
   it('sets explorerContent without mutating prior state', () => {
     const start = reducer(undefined, { type: '@@INIT' });
-    const next = reducer(start, setExplorerContent('       IDENTIFICATION DIVISION.'));
+    const next = reducer(
+      start,
+      setExplorerContent('       IDENTIFICATION DIVISION.')
+    );
     expect(next.explorerContent).toBe('       IDENTIFICATION DIVISION.');
     expect(start.explorerContent).toBe('');
   });

@@ -24,10 +24,6 @@
   // `/// <reference types="vite/client" />` that the transitively-imported app
   // sources rely on (import.meta.env/hot + `*.css` module declarations), so the
   // harness program type-checks app code exactly as the root tsconfig does.
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "../app/keypunch.d.ts"
-  ],
+  "include": ["**/*.ts", "**/*.tsx", "../app/keypunch.d.ts"],
   "exclude": ["node_modules"]
 }

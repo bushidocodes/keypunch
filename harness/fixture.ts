@@ -42,19 +42,21 @@ export function makeFixture(): Fixture {
     // `<owner> <jobID> <status> [<n> Spool Files]`
     jobs: {
       JOB00045: 'IBMUSER JOB00045 OUTPUT 3 Spool Files',
-      JOB00046: 'IBMUSER JOB00046 ACTIVE'
+      JOB00046: 'IBMUSER JOB00046 ACTIVE',
     },
     // Spool output returned by RETR <jobID>.x
     jobOutputs: {
-      JOB00045: '1                J E S 2  J O B  L O G\n HELLO WORLD FROM JES\n IEF142I JOB00045 - COND CODE 0000\n'
+      JOB00045:
+        '1                J E S 2  J O B  L O G\n HELLO WORLD FROM JES\n IEF142I JOB00045 - COND CODE 0000\n',
     },
 
     // --- Sequential / PDS datasets (FILETYPE=SEQ, header dropped) -------
     // columns: volume unit referred ext used recfm lrecl blksz dsorg dsname
-    datasetHeader: 'Volume Unit    Referred  Ext Used Recfm Lrecl BlkSz Dsorg Dsname',
+    datasetHeader:
+      'Volume Unit    Referred  Ext Used Recfm Lrecl BlkSz Dsorg Dsname',
     datasets: [
       'VPWRKA 3390   2017/01/01 1   15   FB    80    27920 PO    IBMUSER.SOURCE',
-      'VPWRKB 3390   2017/01/02 1   5    FB    80    27920 PS    IBMUSER.JCL'
+      'VPWRKB 3390   2017/01/02 1   5    FB    80    27920 PS    IBMUSER.JCL',
     ],
 
     // --- Members per dataset (header dropped) ---------------------------
@@ -63,15 +65,16 @@ export function makeFixture(): Fixture {
     members: {
       'IBMUSER.SOURCE': [
         'HELLO    01.01  2017/01/01 2017/01/02 20    20    0    IBMUSER',
-        'COBOL1   01.00  2017/01/01 2017/01/01 50    50    0    IBMUSER'
+        'COBOL1   01.00  2017/01/01 2017/01/01 50    50    0    IBMUSER',
       ],
-      'IBMUSER.JCL': []
+      'IBMUSER.JCL': [],
     },
     // Member content returned by RETR <member> after CWD into the dataset.
     memberContents: {
       'IBMUSER.SOURCE': {
-        HELLO: 'IDENTIFICATION DIVISION.\nPROGRAM-ID. HELLO.\nPROCEDURE DIVISION.\n    DISPLAY "HELLO WORLD".\n    STOP RUN.\n'
-      }
-    }
+        HELLO:
+          'IDENTIFICATION DIVISION.\nPROGRAM-ID. HELLO.\nPROCEDURE DIVISION.\n    DISPLAY "HELLO WORLD".\n    STOP RUN.\n',
+      },
+    },
   };
 }

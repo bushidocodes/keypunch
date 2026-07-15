@@ -1,11 +1,11 @@
 import { combineReducers } from '@reduxjs/toolkit';
+import config from './config';
+import datasets from './datasets';
 import editor from './editor';
 import explorer from './explorer';
-import config from './config';
+import jobs from './jobs';
 import results from './results';
 import uiStyle from './uiStyle';
-import jobs from './jobs';
-import datasets from './datasets';
 
 const rootReducer = combineReducers({
   editor,

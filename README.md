@@ -97,7 +97,7 @@ $ pnpm package -- --[option]
 ## Tests & lint
 
 ```bash
-pnpm lint           # ESLint (flat config) over app/ + electron/ + harness/
+pnpm lint           # Biome check over app/ + electron/ + harness/
 pnpm typecheck      # tsc --noEmit (TypeScript; .js still allowed via allowJs)
 ```
 

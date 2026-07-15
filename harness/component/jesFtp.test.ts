@@ -6,7 +6,7 @@
 // Primary coverage: every JES operation clears errorMessage on success and
 // sets it on failure (PR #60 — "Clear JES error message on successful ops").
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setErrorMessage } from '../../app/actions/results';
 
 // Build a controlled Redux store that jesFtp.ts's `import { store }` resolves
@@ -14,18 +14,27 @@ import { setErrorMessage } from '../../app/actions/results';
 // place when jesFtp.ts is first evaluated.
 vi.mock('../../app/index', async () => {
   const { combineReducers, configureStore } = await import('@reduxjs/toolkit');
-  const { default: editor }   = await import('../../app/reducers/editor');
+  const { default: editor } = await import('../../app/reducers/editor');
   const { default: explorer } = await import('../../app/reducers/explorer');
-  const { default: config }   = await import('../../app/reducers/config');
-  const { default: results }  = await import('../../app/reducers/results');
-  const { default: uiStyle }  = await import('../../app/reducers/uiStyle');
-  const { default: jobs }     = await import('../../app/reducers/jobs');
+  const { default: config } = await import('../../app/reducers/config');
+  const { default: results } = await import('../../app/reducers/results');
+  const { default: uiStyle } = await import('../../app/reducers/uiStyle');
+  const { default: jobs } = await import('../../app/reducers/jobs');
   const { default: datasets } = await import('../../app/reducers/datasets');
-  const rootReducer = combineReducers({ editor, explorer, config, results, uiStyle, jobs, datasets });
+  const rootReducer = combineReducers({
+    editor,
+    explorer,
+    config,
+    results,
+    uiStyle,
+    jobs,
+    datasets,
+  });
   return {
     store: configureStore({
       reducer: rootReducer,
-      middleware: (gDM) => gDM({ immutableCheck: false, serializableCheck: false }),
+      middleware: (gDM) =>
+        gDM({ immutableCheck: false, serializableCheck: false }),
     }),
   };
 });
@@ -54,8 +63,10 @@ function errorMessage() {
 // value. parseJobs([]) throws, so pollJobs must return the known empty-queue
 // sentinel; parseDatasets([]) throws, so listDatasetsWithMembers must return at
 // least a header row. The setup.ts stubs use [] / {} which don't parse cleanly.
-const EMPTY_JES_QUEUE   = ['No jobs found on Held queue'];
-const DATASETS_HEADER   = ['Volume  Unit    Referred Ext Used Recfm Lrecl Blksz Dsorg  Dsname'];
+const EMPTY_JES_QUEUE = ['No jobs found on Held queue'];
+const DATASETS_HEADER = [
+  'Volume  Unit    Referred Ext Used Recfm Lrecl Blksz Dsorg  Dsname',
+];
 
 describe('jesFtp — errorMessage cleared on success', () => {
   beforeEach(() => {
@@ -113,44 +124,58 @@ describe('jesFtp — errorMessage set on failure', () => {
   });
 
   it('connect() sets errorMessage when the bridge throws', async () => {
-    vi.mocked(window.keypunch.jes.connect).mockRejectedValueOnce(new Error('ECONNREFUSED 127.0.0.1:1'));
+    vi.mocked(window.keypunch.jes.connect).mockRejectedValueOnce(
+      new Error('ECONNREFUSED 127.0.0.1:1')
+    );
     await jes.connect();
     expect(errorMessage()).toMatch(/JES error:/);
     expect(errorMessage()).toContain('ECONNREFUSED');
   });
 
   it('pollJobStatus() sets errorMessage when the bridge throws', async () => {
-    vi.mocked(window.keypunch.jes.pollJobs).mockRejectedValueOnce(new Error('timeout'));
+    vi.mocked(window.keypunch.jes.pollJobs).mockRejectedValueOnce(
+      new Error('timeout')
+    );
     await jes.pollJobStatus();
     expect(errorMessage()).toMatch(/JES error:.*timeout/);
   });
 
   it('submitJob() sets errorMessage when the bridge throws', async () => {
-    vi.mocked(window.keypunch.jes.submitJob).mockRejectedValueOnce(new Error('not connected'));
+    vi.mocked(window.keypunch.jes.submitJob).mockRejectedValueOnce(
+      new Error('not connected')
+    );
     await jes.submitJob('//JCL');
     expect(errorMessage()).toMatch(/JES error:/);
   });
 
   it('deleteJob() sets errorMessage when the bridge throws', async () => {
-    vi.mocked(window.keypunch.jes.deleteJob).mockRejectedValueOnce(new Error('job not found'));
+    vi.mocked(window.keypunch.jes.deleteJob).mockRejectedValueOnce(
+      new Error('job not found')
+    );
     await jes.deleteJob('JOB99999');
     expect(errorMessage()).toMatch(/JES error:/);
   });
 
   it('retrieveJob() sets errorMessage when the bridge throws', async () => {
-    vi.mocked(window.keypunch.jes.retrieveJob).mockRejectedValueOnce(new Error('spool missing'));
+    vi.mocked(window.keypunch.jes.retrieveJob).mockRejectedValueOnce(
+      new Error('spool missing')
+    );
     await jes.retrieveJob('JOB00045');
     expect(errorMessage()).toMatch(/JES error:/);
   });
 
   it('listDatasets() sets errorMessage when the bridge throws', async () => {
-    vi.mocked(window.keypunch.jes.listDatasetsWithMembers).mockRejectedValueOnce(new Error('session expired'));
+    vi.mocked(
+      window.keypunch.jes.listDatasetsWithMembers
+    ).mockRejectedValueOnce(new Error('session expired'));
     await jes.listDatasets();
     expect(errorMessage()).toMatch(/JES error:/);
   });
 
   it('retrieveMember() sets errorMessage when the bridge throws', async () => {
-    vi.mocked(window.keypunch.jes.retrieveMember).mockRejectedValueOnce(new Error('member not found'));
+    vi.mocked(window.keypunch.jes.retrieveMember).mockRejectedValueOnce(
+      new Error('member not found')
+    );
     await jes.retrieveMember('IBMUSER.SOURCE', 'MISSING');
     expect(errorMessage()).toMatch(/JES error:/);
   });
@@ -161,7 +186,9 @@ describe('jesFtp — errorMessage set on failure', () => {
 describe('jesFtp — failure preserves prior error context', () => {
   it('a failed op overwrites (not clears) the previous error', async () => {
     store.dispatch(setErrorMessage('first error'));
-    vi.mocked(window.keypunch.jes.connect).mockRejectedValueOnce(new Error('second error'));
+    vi.mocked(window.keypunch.jes.connect).mockRejectedValueOnce(
+      new Error('second error')
+    );
     await jes.connect();
     expect(errorMessage()).toMatch(/second error/);
     expect(errorMessage()).not.toBe('');

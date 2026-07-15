@@ -18,7 +18,7 @@ pnpm install       # install all deps (downloads Electron binary)
 pnpm dev           # hot-reload dev mode (electron-vite)
 pnpm build         # production build → out/
 pnpm typecheck     # tsc --noEmit
-pnpm lint          # ESLint flat config
+pnpm lint          # Biome check
 ```
 
 For faster lint/typecheck without downloading the Electron binary:
@@ -117,7 +117,7 @@ and upgrade when a stable v6 appears.
 
 | Job | What it checks |
 |---|---|
-| `lint` | ESLint (skips Electron binary download) |
+| `lint` | Biome (skips Electron binary download) |
 | `typecheck` | `tsc --noEmit` over app/ + electron/ (skips Electron binary download) |
 | `harness-tests` | Harness `tsc --noEmit` typecheck + Vitest unit + integration tests |
 | `build` | electron-vite production build + artifact assertions |

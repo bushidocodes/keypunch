@@ -1,5 +1,5 @@
-import { SET_EDITOR_CONTENT, SET_EDITOR_PATH } from '../constants';
 import type { EditorAction } from '../actions/editor';
+import { SET_EDITOR_CONTENT, SET_EDITOR_PATH } from '../constants';
 
 export interface EditorState {
   editorContent: string;

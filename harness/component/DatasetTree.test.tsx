@@ -8,8 +8,8 @@
 // ace-builds at module level, the vitest.config resolve.alias stubs those out
 // so the file can be loaded without WebWorker / canvas errors.
 
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { DatasetTree } from '../../app/components/Explorer';
 import type { Dataset, Member } from '../../app/utils/jesParse';
 
@@ -18,18 +18,27 @@ import type { Dataset, Member } from '../../app/utils/jesParse';
 // call window.keypunch.onMenu.
 vi.mock('../../app/index', async () => {
   const { combineReducers, configureStore } = await import('@reduxjs/toolkit');
-  const { default: editor }   = await import('../../app/reducers/editor');
+  const { default: editor } = await import('../../app/reducers/editor');
   const { default: explorer } = await import('../../app/reducers/explorer');
-  const { default: config }   = await import('../../app/reducers/config');
-  const { default: results }  = await import('../../app/reducers/results');
-  const { default: uiStyle }  = await import('../../app/reducers/uiStyle');
-  const { default: jobs }     = await import('../../app/reducers/jobs');
+  const { default: config } = await import('../../app/reducers/config');
+  const { default: results } = await import('../../app/reducers/results');
+  const { default: uiStyle } = await import('../../app/reducers/uiStyle');
+  const { default: jobs } = await import('../../app/reducers/jobs');
   const { default: datasets } = await import('../../app/reducers/datasets');
-  const rootReducer = combineReducers({ editor, explorer, config, results, uiStyle, jobs, datasets });
+  const rootReducer = combineReducers({
+    editor,
+    explorer,
+    config,
+    results,
+    uiStyle,
+    jobs,
+    datasets,
+  });
   return {
     store: configureStore({
       reducer: rootReducer,
-      middleware: (gDM) => gDM({ immutableCheck: false, serializableCheck: false }),
+      middleware: (gDM) =>
+        gDM({ immutableCheck: false, serializableCheck: false }),
     }),
   };
 });
@@ -37,25 +46,31 @@ vi.mock('../../app/index', async () => {
 // Stub jesFtp so Explorer.tsx's useEffect doesn't fire real FTP calls.
 vi.mock('../../app/utils/jesFtp', () => ({
   default: {
-    connect:         vi.fn(),
-    disconnect:      vi.fn(),
-    retrieveMember:  vi.fn(),
-    pollJobStatus:   vi.fn(),
-    listDatasets:    vi.fn(),
-    submitJob:       vi.fn(),
-    deleteJob:       vi.fn(),
-    retrieveJob:     vi.fn(),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    retrieveMember: vi.fn(),
+    pollJobStatus: vi.fn(),
+    listDatasets: vi.fn(),
+    submitJob: vi.fn(),
+    deleteJob: vi.fn(),
+    retrieveJob: vi.fn(),
   },
   pollJobStatus: vi.fn(),
-  listDatasets:  vi.fn(),
+  listDatasets: vi.fn(),
 }));
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 // Minimal nodes — only the fields DatasetTree reads (name, attributes.dsname,
 // children). Cast since the full column-attribute set is irrelevant here.
-const HELLO_MEMBER   = { name: 'HELLO',   attributes: { dsname: 'IBMUSER.JCL' } } as Member;
-const GOODBYE_MEMBER = { name: 'GOODBYE', attributes: { dsname: 'IBMUSER.JCL' } } as Member;
+const HELLO_MEMBER = {
+  name: 'HELLO',
+  attributes: { dsname: 'IBMUSER.JCL' },
+} as Member;
+const GOODBYE_MEMBER = {
+  name: 'GOODBYE',
+  attributes: { dsname: 'IBMUSER.JCL' },
+} as Member;
 
 const sampleDatasets = [
   {
@@ -106,7 +121,9 @@ describe('DatasetTree', () => {
     expect(screen.getByText('GOODBYE')).toBeInTheDocument();
     // The toggle arrow should have flipped to ▾
     expect(
-      screen.getByText('IBMUSER.JCL').closest('.tree-node')!
+      screen
+        .getByText('IBMUSER.JCL')
+        .closest('.tree-node')!
         .querySelector('.tree-toggle')!.textContent
     ).toBe('▾');
   });
@@ -128,7 +145,9 @@ describe('DatasetTree', () => {
 
   it('calls onSelectMember with the clicked member object', () => {
     const onSelectMember = vi.fn();
-    render(<DatasetTree datasets={sampleDatasets} onSelectMember={onSelectMember} />);
+    render(
+      <DatasetTree datasets={sampleDatasets} onSelectMember={onSelectMember} />
+    );
     clickNode('IBMUSER.JCL');
     clickNode('HELLO');
     expect(onSelectMember).toHaveBeenCalledOnce();

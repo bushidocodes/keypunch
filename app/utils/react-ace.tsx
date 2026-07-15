@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
 import ace from 'ace-builds';
+import { useEffect, useRef } from 'react';
 
 interface AceEditorProps {
   mode?: string;

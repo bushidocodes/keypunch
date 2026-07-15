@@ -1,6 +1,6 @@
+import type { DatasetsAction } from '../actions/datasets';
 import { REFRESH_DATASETS } from '../constants';
 import type { Dataset } from '../utils/jesParse';
-import type { DatasetsAction } from '../actions/datasets';
 
 export type DatasetsState = Dataset[];
 

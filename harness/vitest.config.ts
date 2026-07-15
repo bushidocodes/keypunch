@@ -1,6 +1,6 @@
-import { defineConfig } from 'vitest/config';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { defineConfig } from 'vitest/config';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
@@ -79,10 +79,7 @@ export default defineConfig({
           ...sharedTest,
           name: 'node',
           environment: 'node',
-          include: [
-            'unit/**/*.test.ts',
-            'integration/**/*.test.ts',
-          ],
+          include: ['unit/**/*.test.ts', 'integration/**/*.test.ts'],
         },
       },
       {

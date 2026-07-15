@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface IndicatorProps {
   isLit?: boolean;
@@ -29,7 +29,13 @@ export default function Indicator({
 
   return (
     <svg viewBox="0 0 200 200" width="15px" height="15px">
-      <circle cx="100" cy="100" r="100" fill={lit ? litColor : unlitColor} stroke="#000" />
+      <circle
+        cx="100"
+        cy="100"
+        r="100"
+        fill={lit ? litColor : unlitColor}
+        stroke="#000"
+      />
     </svg>
   );
 }

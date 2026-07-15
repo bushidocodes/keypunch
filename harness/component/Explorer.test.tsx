@@ -7,26 +7,39 @@
 //   • clicking a member calls jesFtp.retrieveMember
 //   • the read-only AceEditor shim renders with explorerContent
 
-import { describe, it, expect, vi } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import Explorer from '../../app/components/Explorer';
-import { createTestStore, renderWithStore, type PreloadedTestState } from './testUtils';
 import type { Dataset } from '../../app/utils/jesParse';
+import {
+  createTestStore,
+  type PreloadedTestState,
+  renderWithStore,
+} from './testUtils';
 
 vi.mock('../../app/index', async () => {
   const { combineReducers, configureStore } = await import('@reduxjs/toolkit');
-  const { default: editor }   = await import('../../app/reducers/editor');
+  const { default: editor } = await import('../../app/reducers/editor');
   const { default: explorer } = await import('../../app/reducers/explorer');
-  const { default: config }   = await import('../../app/reducers/config');
-  const { default: results }  = await import('../../app/reducers/results');
-  const { default: uiStyle }  = await import('../../app/reducers/uiStyle');
-  const { default: jobs }     = await import('../../app/reducers/jobs');
+  const { default: config } = await import('../../app/reducers/config');
+  const { default: results } = await import('../../app/reducers/results');
+  const { default: uiStyle } = await import('../../app/reducers/uiStyle');
+  const { default: jobs } = await import('../../app/reducers/jobs');
   const { default: datasets } = await import('../../app/reducers/datasets');
-  const rootReducer = combineReducers({ editor, explorer, config, results, uiStyle, jobs, datasets });
+  const rootReducer = combineReducers({
+    editor,
+    explorer,
+    config,
+    results,
+    uiStyle,
+    jobs,
+    datasets,
+  });
   return {
     store: configureStore({
       reducer: rootReducer,
-      middleware: (gDM) => gDM({ immutableCheck: false, serializableCheck: false }),
+      middleware: (gDM) =>
+        gDM({ immutableCheck: false, serializableCheck: false }),
     }),
   };
 });
@@ -34,17 +47,17 @@ vi.mock('../../app/index', async () => {
 // Stub jesFtp inline (no top-level variable) so hoisting works correctly.
 vi.mock('../../app/utils/jesFtp', () => ({
   default: {
-    connect:         vi.fn(() => Promise.resolve()),
-    disconnect:      vi.fn(() => Promise.resolve()),
-    submitJob:       vi.fn(() => Promise.resolve()),
-    pollJobStatus:   vi.fn(() => Promise.resolve()),
-    listDatasets:    vi.fn(() => Promise.resolve()),
-    retrieveMember:  vi.fn(() => Promise.resolve()),
-    deleteJob:       vi.fn(() => Promise.resolve()),
-    retrieveJob:     vi.fn(() => Promise.resolve()),
+    connect: vi.fn(() => Promise.resolve()),
+    disconnect: vi.fn(() => Promise.resolve()),
+    submitJob: vi.fn(() => Promise.resolve()),
+    pollJobStatus: vi.fn(() => Promise.resolve()),
+    listDatasets: vi.fn(() => Promise.resolve()),
+    retrieveMember: vi.fn(() => Promise.resolve()),
+    deleteJob: vi.fn(() => Promise.resolve()),
+    retrieveJob: vi.fn(() => Promise.resolve()),
   },
   pollJobStatus: vi.fn(),
-  listDatasets:  vi.fn(),
+  listDatasets: vi.fn(),
 }));
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -95,7 +108,10 @@ describe('Explorer', () => {
     renderExplorer({ datasets: SAMPLE_DATASETS });
     fireEvent.click(screen.getByText('IBMUSER.SOURCE'));
     fireEvent.click(screen.getByText('HELLO'));
-    expect(jesFtp.retrieveMember).toHaveBeenCalledWith('IBMUSER.SOURCE', 'HELLO');
+    expect(jesFtp.retrieveMember).toHaveBeenCalledWith(
+      'IBMUSER.SOURCE',
+      'HELLO'
+    );
   });
 
   it('renders the read-only AceEditor shim', () => {

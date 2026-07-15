@@ -6,7 +6,7 @@
 // `ipcRenderer`. Every method here is a thin wrapper over an ipcMain.handle
 // channel in main.ts.
 
-import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+import { contextBridge, type IpcRendererEvent, ipcRenderer } from 'electron';
 import type { KeypunchApi, MenuChannel } from '../app/keypunch';
 
 const api: KeypunchApi = {
@@ -29,24 +29,29 @@ const api: KeypunchApi = {
     connect: (config) => ipcRenderer.invoke('jes:connect', config),
     disconnect: () => ipcRenderer.invoke('jes:disconnect'),
     pollJobs: (config) => ipcRenderer.invoke('jes:pollJobs', config),
-    submitJob: (config, content) => ipcRenderer.invoke('jes:submitJob', config, content),
-    retrieveJob: (config, jobID) => ipcRenderer.invoke('jes:retrieveJob', config, jobID),
-    deleteJob: (config, jobID) => ipcRenderer.invoke('jes:deleteJob', config, jobID),
+    submitJob: (config, content) =>
+      ipcRenderer.invoke('jes:submitJob', config, content),
+    retrieveJob: (config, jobID) =>
+      ipcRenderer.invoke('jes:retrieveJob', config, jobID),
+    deleteJob: (config, jobID) =>
+      ipcRenderer.invoke('jes:deleteJob', config, jobID),
     listDatasets: (config) => ipcRenderer.invoke('jes:listDatasets', config),
-    listMembers: (config, dsname) => ipcRenderer.invoke('jes:listMembers', config, dsname),
+    listMembers: (config, dsname) =>
+      ipcRenderer.invoke('jes:listMembers', config, dsname),
     retrieveMember: (config, dsname, member) =>
       ipcRenderer.invoke('jes:retrieveMember', config, dsname, member),
     listDatasetsWithMembers: (config) =>
-      ipcRenderer.invoke('jes:listDatasetsWithMembers', config)
+      ipcRenderer.invoke('jes:listDatasetsWithMembers', config),
   },
 
   // --- main -> renderer menu events ---
   // channel is one of: file:new, file:open, file:save, file:saveAs, kill-ftp
   onMenu: (cb) => {
-    const listener = (_evt: IpcRendererEvent, channel: MenuChannel) => cb(channel);
+    const listener = (_evt: IpcRendererEvent, channel: MenuChannel) =>
+      cb(channel);
     ipcRenderer.on('menu', listener);
     return () => ipcRenderer.removeListener('menu', listener);
-  }
+  },
 };
 
 contextBridge.exposeInMainWorld('keypunch', api);

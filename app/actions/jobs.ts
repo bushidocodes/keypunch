@@ -1,4 +1,4 @@
-import { REFRESH_JOBS, LOAD_JOB_RESULTS } from '../constants';
+import { LOAD_JOB_RESULTS, REFRESH_JOBS } from '../constants';
 import type { JobMap } from '../utils/jesParse';
 
 export const refreshJobs = (jobsState: JobMap) => ({

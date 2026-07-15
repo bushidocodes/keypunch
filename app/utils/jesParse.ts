@@ -85,9 +85,11 @@ export function parseJobs(results: string[] | null | undefined): JobMap {
     jobs[jobID] = {
       owner: jobSplit[0] ?? '',
       status: jobSplit[2] ?? '',
-      numberOfSpoolFiles: job.includes('Spool Files') ? (jobSplit[3] ?? null) : null,
+      numberOfSpoolFiles: job.includes('Spool Files')
+        ? (jobSplit[3] ?? null)
+        : null,
       jobID,
-      fullString: job.trim()
+      fullString: job.trim(),
     };
   });
   return jobs;
@@ -106,14 +108,33 @@ export function parseDatasets(results: string[] | null | undefined): Dataset[] {
     const datasetSplit = dataset.trim().split(/ +/);
     // Destructuring defaults cover short/ragged rows (mirrors parseMembers' `|| ''`).
     const [
-      volume = '', unit = '', referred = '', ext = '', used = '',
-      recfm = '', lrecl = '', blksz = '', dsorg = '', dsname = ''
+      volume = '',
+      unit = '',
+      referred = '',
+      ext = '',
+      used = '',
+      recfm = '',
+      lrecl = '',
+      blksz = '',
+      dsorg = '',
+      dsname = '',
     ] = datasetSplit;
     return {
       name: dsname,
       toggled: false,
       children: [],
-      attributes: { volume, unit, referred, ext, used, recfm, lrecl, blksz, dsorg, dsname }
+      attributes: {
+        volume,
+        unit,
+        referred,
+        ext,
+        used,
+        recfm,
+        lrecl,
+        blksz,
+        dsorg,
+        dsname,
+      },
     };
   });
 }
@@ -121,7 +142,10 @@ export function parseDatasets(results: string[] | null | undefined): Dataset[] {
 // Parse the output of `LIST ''` inside a partitioned dataset into an array of
 // member child-nodes belonging to `dsname`. The first row is a header and is
 // discarded. Missing columns default to '' exactly as the original did.
-export function parseMembers(results: string[] | null | undefined, dsname: string): Member[] {
+export function parseMembers(
+  results: string[] | null | undefined,
+  dsname: string
+): Member[] {
   const rows = (results || []).slice(1); // drop the header row
   return rows.map((member) => {
     const memberSplit = member.trim().split(/ +/);
@@ -136,7 +160,18 @@ export function parseMembers(results: string[] | null | undefined, dsname: strin
     const dsorg = memberSplit[8] || '';
     return {
       name,
-      attributes: { name, vvmm, created, changed, size, init, mod, id, dsorg, dsname }
+      attributes: {
+        name,
+        vvmm,
+        created,
+        changed,
+        size,
+        init,
+        mod,
+        id,
+        dsorg,
+        dsname,
+      },
     };
   });
 }

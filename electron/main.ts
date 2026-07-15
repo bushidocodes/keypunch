@@ -6,26 +6,26 @@
 // (contextIsolation:true, nodeIntegration:false) and reaches main only through
 // the `window.keypunch` API defined in preload.ts over IPC.
 
+import { Client, type FileInfo } from 'basic-ftp';
 import {
   app,
   BrowserWindow,
-  Menu,
-  shell,
   dialog,
-  ipcMain,
   type IpcMainInvokeEvent,
-  type MenuItemConstructorOptions
+  ipcMain,
+  Menu,
+  type MenuItemConstructorOptions,
+  shell,
 } from 'electron';
 import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
+import { PassThrough, Writable } from 'stream';
 import { fileURLToPath } from 'url';
-import { Client, type FileInfo } from 'basic-ftp';
-import { Writable, PassThrough } from 'stream';
 import type {
-  FtpConfig,
   ConfirmOptions,
+  FtpConfig,
+  MenuChannel,
   OpenFileResult,
-  MenuChannel
 } from '../app/keypunch';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -64,9 +64,9 @@ class JES {
   private async _ensureConnected(config: FtpConfig): Promise<void> {
     if (!this.ftp.closed) return;
     await this.ftp.access({
-      host:     config.hostName,
-      port:     Number(config.ftpPort),
-      user:     this._username,
+      host: config.hostName,
+      port: Number(config.ftpPort),
+      user: this._username,
       password: this._password,
       // `true` → explicit FTPS (AUTH TLS): the control connection is
       // established in plaintext and then upgraded with AUTH TLS.
@@ -107,7 +107,10 @@ class JES {
   private async _downloadToString(remotePath: string): Promise<string> {
     const chunks: Buffer[] = [];
     const dest = new Writable({
-      write(chunk: Buffer, _enc: string, cb: () => void) { chunks.push(chunk); cb(); }
+      write(chunk: Buffer, _enc: string, cb: () => void) {
+        chunks.push(chunk);
+        cb();
+      },
     });
     await this.ftp.downloadTo(dest, remotePath);
     return Buffer.concat(chunks).toString();
@@ -197,12 +200,20 @@ class JES {
       return [];
     } finally {
       // MVS treats the home directory as the high-level-qualifier (the userid).
-      try { await this.ftp.cd('~'); } catch { /* best-effort reset */ }
+      try {
+        await this.ftp.cd('~');
+      } catch {
+        /* best-effort reset */
+      }
     }
   }
 
   // Retrieve the contents of a member as a string.
-  async retrieveMember(config: FtpConfig, dsname: string, member: string): Promise<string> {
+  async retrieveMember(
+    config: FtpConfig,
+    dsname: string,
+    member: string
+  ): Promise<string> {
     await this._ensureConnected(config);
     await this._setEncoding('ascii');
     await this._setFiletype('seq');
@@ -211,7 +222,11 @@ class JES {
       await this.ftp.cd(dsname);
       return await this._downloadToString(member);
     } finally {
-      try { await this.ftp.cd('~'); } catch { /* best-effort */ }
+      try {
+        await this.ftp.cd('~');
+      } catch {
+        /* best-effort */
+      }
     }
   }
 
@@ -236,7 +251,7 @@ class JES {
     // the parseDatasets column order in jesParse.ts). Slice off the header row.
     const dsnames = datasetRows
       .slice(1)
-      .map(row => row.trim().split(/\s+/)[9] ?? '')
+      .map((row) => row.trim().split(/\s+/)[9] ?? '')
       .filter(Boolean);
 
     const memberRowsByDs: Record<string, string[]> = {};
@@ -248,7 +263,11 @@ class JES {
         // Empty / unreadable PDS — treat as no members (mirrors listMembers).
         memberRowsByDs[dsname] = [];
       } finally {
-        try { await this.ftp.cd('~'); } catch { /* best-effort reset */ }
+        try {
+          await this.ftp.cd('~');
+        } catch {
+          /* best-effort reset */
+        }
       }
     }
 
@@ -271,14 +290,17 @@ function registerIpc(): void {
   function enqueue<T>(fn: () => Promise<T>): Promise<T> {
     // Absorb the ticket's own rejection on _ftpQueue so the chain stays live.
     const ticket = _ftpQueue.then(fn, fn);
-    _ftpQueue = ticket.then(() => {}, () => {});
+    _ftpQueue = ticket.then(
+      () => {},
+      () => {}
+    );
     return ticket;
   }
 
   // --- file dialogs + fs ---
   ipcMain.handle('file:open', async (): Promise<OpenFileResult | null> => {
     const result = await dialog.showOpenDialog(mainWindow!, {
-      properties: ['openFile', 'createDirectory', 'showHiddenFiles']
+      properties: ['openFile', 'createDirectory', 'showHiddenFiles'],
     });
     if (result.canceled || !result.filePaths.length) return null;
     const filePath = result.filePaths[0]!; // length checked above
@@ -312,21 +334,24 @@ function registerIpc(): void {
       defaultId: 0,
       title: 'Confirm Job Submission',
       message: 'Are you sure that you want to submit your batch job?',
-      noLink: true
+      noLink: true,
     });
     return result.response === 1;
   });
 
   ipcMain.handle(
     'dialog:confirm',
-    async (_evt: IpcMainInvokeEvent, opts: ConfirmOptions): Promise<boolean> => {
+    async (
+      _evt: IpcMainInvokeEvent,
+      opts: ConfirmOptions
+    ): Promise<boolean> => {
       const result = await dialog.showMessageBox(mainWindow!, {
         type: 'question',
         buttons: opts.buttons || ['Cancel', 'OK'],
         defaultId: 0,
         title: opts.title || 'Confirm',
         message: opts.message || '',
-        noLink: true
+        noLink: true,
       });
       return result.response === 1;
     }
@@ -337,48 +362,69 @@ function registerIpc(): void {
   // setCredentials is synchronous on the main side and does not touch the FTP
   // connection, so it runs outside the queue.  This also avoids a deadlock if
   // the renderer calls setCredentials while another operation is queued.
-  ipcMain.handle('jes:setCredentials',
+  ipcMain.handle(
+    'jes:setCredentials',
     (_evt: IpcMainInvokeEvent, username: string, password: string) =>
-      jes.setCredentials(username, password));
+      jes.setCredentials(username, password)
+  );
 
-  ipcMain.handle('jes:connect',
+  ipcMain.handle('jes:connect', (_evt: IpcMainInvokeEvent, config: FtpConfig) =>
+    enqueue(() => jes.connect(config))
+  );
+
+  ipcMain.handle('jes:disconnect', () => enqueue(() => jes.disconnect()));
+
+  ipcMain.handle(
+    'jes:pollJobs',
     (_evt: IpcMainInvokeEvent, config: FtpConfig) =>
-      enqueue(() => jes.connect(config)));
+      enqueue(() => jes.pollJobs(config))
+  );
 
-  ipcMain.handle('jes:disconnect',
-    () => enqueue(() => jes.disconnect()));
-
-  ipcMain.handle('jes:pollJobs',
-    (_evt: IpcMainInvokeEvent, config: FtpConfig) =>
-      enqueue(() => jes.pollJobs(config)));
-
-  ipcMain.handle('jes:submitJob',
+  ipcMain.handle(
+    'jes:submitJob',
     (_evt: IpcMainInvokeEvent, config: FtpConfig, content: string) =>
-      enqueue(() => jes.submitJob(config, content)));
+      enqueue(() => jes.submitJob(config, content))
+  );
 
-  ipcMain.handle('jes:retrieveJob',
+  ipcMain.handle(
+    'jes:retrieveJob',
     (_evt: IpcMainInvokeEvent, config: FtpConfig, jobID: string) =>
-      enqueue(() => jes.retrieveJob(config, jobID)));
+      enqueue(() => jes.retrieveJob(config, jobID))
+  );
 
-  ipcMain.handle('jes:deleteJob',
+  ipcMain.handle(
+    'jes:deleteJob',
     (_evt: IpcMainInvokeEvent, config: FtpConfig, jobID: string) =>
-      enqueue(() => jes.deleteJob(config, jobID)));
+      enqueue(() => jes.deleteJob(config, jobID))
+  );
 
-  ipcMain.handle('jes:listDatasets',
+  ipcMain.handle(
+    'jes:listDatasets',
     (_evt: IpcMainInvokeEvent, config: FtpConfig) =>
-      enqueue(() => jes.listDatasets(config)));
+      enqueue(() => jes.listDatasets(config))
+  );
 
-  ipcMain.handle('jes:listMembers',
+  ipcMain.handle(
+    'jes:listMembers',
     (_evt: IpcMainInvokeEvent, config: FtpConfig, dsname: string) =>
-      enqueue(() => jes.listMembers(config, dsname)));
+      enqueue(() => jes.listMembers(config, dsname))
+  );
 
-  ipcMain.handle('jes:retrieveMember',
-    (_evt: IpcMainInvokeEvent, config: FtpConfig, dsname: string, member: string) =>
-      enqueue(() => jes.retrieveMember(config, dsname, member)));
+  ipcMain.handle(
+    'jes:retrieveMember',
+    (
+      _evt: IpcMainInvokeEvent,
+      config: FtpConfig,
+      dsname: string,
+      member: string
+    ) => enqueue(() => jes.retrieveMember(config, dsname, member))
+  );
 
-  ipcMain.handle('jes:listDatasetsWithMembers',
+  ipcMain.handle(
+    'jes:listDatasetsWithMembers',
     (_evt: IpcMainInvokeEvent, config: FtpConfig) =>
-      enqueue(() => jes.listDatasetsWithMembers(config)));
+      enqueue(() => jes.listDatasetsWithMembers(config))
+  );
 }
 
 // --------------------------------------------------------------------------
@@ -394,16 +440,36 @@ function buildMenu(): void {
     {
       label: 'File',
       submenu: [
-        { label: 'New File', accelerator: 'CmdOrCtrl+N', click: () => sendMenu('file:new') },
+        {
+          label: 'New File',
+          accelerator: 'CmdOrCtrl+N',
+          click: () => sendMenu('file:new'),
+        },
         { type: 'separator' },
-        { label: 'Open File', accelerator: 'CmdOrCtrl+O', click: () => sendMenu('file:open') },
+        {
+          label: 'Open File',
+          accelerator: 'CmdOrCtrl+O',
+          click: () => sendMenu('file:open'),
+        },
         { type: 'separator' },
-        { label: 'Save', accelerator: 'CmdOrCtrl+S', click: () => sendMenu('file:save') },
-        { label: 'Save As', accelerator: 'Shift+CmdOrCtrl+S', click: () => sendMenu('file:saveAs') },
+        {
+          label: 'Save',
+          accelerator: 'CmdOrCtrl+S',
+          click: () => sendMenu('file:save'),
+        },
+        {
+          label: 'Save As',
+          accelerator: 'Shift+CmdOrCtrl+S',
+          click: () => sendMenu('file:saveAs'),
+        },
         { type: 'separator' },
         { role: 'minimize' },
-        { label: 'Close Window', role: 'close', accelerator: 'Shift+CmdOrCtrl+W' }
-      ]
+        {
+          label: 'Close Window',
+          role: 'close',
+          accelerator: 'Shift+CmdOrCtrl+W',
+        },
+      ],
     },
     {
       label: 'Edit',
@@ -416,8 +482,8 @@ function buildMenu(): void {
         { role: 'paste' },
         { role: 'pasteAndMatchStyle' },
         { role: 'delete' },
-        { role: 'selectAll' }
-      ]
+        { role: 'selectAll' },
+      ],
     },
     {
       label: 'View',
@@ -429,25 +495,26 @@ function buildMenu(): void {
         { role: 'zoomIn' },
         { role: 'zoomOut' },
         { type: 'separator' },
-        { role: 'togglefullscreen' }
-      ]
+        { role: 'togglefullscreen' },
+      ],
     },
     {
       role: 'help',
       submenu: [
         {
           label: 'View on GitHub',
-          click: () => shell.openExternal('https://github.com/bushidocodes/keypunch')
+          click: () =>
+            shell.openExternal('https://github.com/bushidocodes/keypunch'),
         },
         {
           // The renderer's 'kill-ftp' handler calls window.keypunch.jes.disconnect()
           // (-> jes.disconnect() here) and clears the status indicators, so we just
           // forward the event rather than disconnecting twice.
           label: 'Kill FTP',
-          click: () => sendMenu('kill-ftp')
-        }
-      ]
-    }
+          click: () => sendMenu('kill-ftp'),
+        },
+      ],
+    },
   ];
 
   if (process.platform === 'darwin') {
@@ -462,8 +529,8 @@ function buildMenu(): void {
         { role: 'hideOthers' },
         { role: 'unhide' },
         { type: 'separator' },
-        { role: 'quit' }
-      ]
+        { role: 'quit' },
+      ],
     });
     // Add the macOS Speech submenu to the Edit menu. Find it by label rather
     // than index: the unshift above shifted every position, and the previous
@@ -474,7 +541,7 @@ function buildMenu(): void {
         { type: 'separator' },
         {
           label: 'Speech',
-          submenu: [{ role: 'startSpeaking' }, { role: 'stopSpeaking' }]
+          submenu: [{ role: 'startSpeaking' }, { role: 'stopSpeaking' }],
         }
       );
     }
@@ -496,8 +563,8 @@ function createWindow(): void {
       preload: path.join(__dirname, '../preload/preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true
-    }
+      sandbox: true,
+    },
   });
 
   // electron-vite injects ELECTRON_RENDERER_URL in dev; in production load the
@@ -513,7 +580,9 @@ function createWindow(): void {
     mainWindow!.focus();
   });
 
-  mainWindow.on('closed', () => { mainWindow = null; });
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
 }
 
 app.on('window-all-closed', () => {

@@ -1,5 +1,5 @@
-import { SET_THEME_DARK, SET_THEME_LIGHT } from '../constants';
 import type { UiStyleAction } from '../actions/uiStyle';
+import { SET_THEME_DARK, SET_THEME_LIGHT } from '../constants';
 
 export interface UiStyleState {
   theme: 'dark' | 'light';
@@ -14,8 +14,10 @@ export default function uiStyle(
   action: UiStyleAction
 ): UiStyleState {
   switch (action.type) {
-    case SET_THEME_DARK:  return { ...state, theme: 'dark'  };
-    case SET_THEME_LIGHT: return { ...state, theme: 'light' };
+    case SET_THEME_DARK:
+      return { ...state, theme: 'dark' };
+    case SET_THEME_LIGHT:
+      return { ...state, theme: 'light' };
     default:
       return state;
   }
