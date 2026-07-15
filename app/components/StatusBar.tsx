@@ -1,22 +1,22 @@
 import { connect } from 'react-redux';
-import Indicator from './Indicator';
 import { store } from '../index';
-import { testConnectivity } from '../utils/nativeDialogs';
-import jes from '../utils/jesFtp';
 import type { RootState } from '../reducers';
+import jes from '../utils/jesFtp';
+import { testConnectivity } from '../utils/nativeDialogs';
+import Indicator from './Indicator';
 
 function mapStateToProps(state: RootState) {
   return {
-    currentStep:    state.results.currentStep,
-    isConnected:    state.results.isConnected,
-    isConnecting:   state.results.isConnecting,
-    isSubmitted:    state.results.isSubmitted,
-    isSubmitting:   state.results.isSubmitting,
-    isRetrieved:    state.results.isRetrieved,
-    isRetrieving:   state.results.isRetrieving,
+    currentStep: state.results.currentStep,
+    isConnected: state.results.isConnected,
+    isConnecting: state.results.isConnecting,
+    isSubmitted: state.results.isSubmitted,
+    isSubmitting: state.results.isSubmitting,
+    isRetrieved: state.results.isRetrieved,
+    isRetrieving: state.results.isRetrieving,
     isDisconnected: state.results.isDisconnected,
     isDisconnecting: state.results.isDisconnecting,
-    errorMessage:   state.results.errorMessage,
+    errorMessage: state.results.errorMessage,
   };
 }
 
@@ -44,7 +44,8 @@ function mapDispatchToProps() {
   };
 }
 
-type Props = ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>;
+type Props = ReturnType<typeof mapStateToProps> &
+  ReturnType<typeof mapDispatchToProps>;
 
 function StatusBar(props: Props) {
   return (
@@ -64,10 +65,26 @@ function StatusBar(props: Props) {
       )}
 
       {[
-        { label: 'CONN', isLit: props.isConnected,    isBlinking: props.isConnecting },
-        { label: 'SENT', isLit: props.isSubmitted,    isBlinking: props.isSubmitting },
-        { label: 'RETR', isLit: props.isRetrieved,    isBlinking: props.isRetrieving },
-        { label: 'DISC', isLit: props.isDisconnected, isBlinking: props.isDisconnecting },
+        {
+          label: 'CONN',
+          isLit: props.isConnected,
+          isBlinking: props.isConnecting,
+        },
+        {
+          label: 'SENT',
+          isLit: props.isSubmitted,
+          isBlinking: props.isSubmitting,
+        },
+        {
+          label: 'RETR',
+          isLit: props.isRetrieved,
+          isBlinking: props.isRetrieving,
+        },
+        {
+          label: 'DISC',
+          isLit: props.isDisconnected,
+          isBlinking: props.isDisconnecting,
+        },
       ].map(({ label, isLit, isBlinking }) => (
         <div key={label} className="indicator-cell">
           {label}

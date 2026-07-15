@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
 import type { Reducer } from '@reduxjs/toolkit';
-import editorReducer from '../../app/reducers/editor';
+import { describe, expect, it } from 'vitest';
 import { setEditorContent, setEditorPath } from '../../app/actions/editor';
+import editorReducer from '../../app/reducers/editor';
 
 const reducer = editorReducer as Reducer<ReturnType<typeof editorReducer>>;
 

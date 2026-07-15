@@ -10,17 +10,19 @@ import type { AppDispatch } from '../store/configureStore';
 function mapStateToProps(state: RootState) {
   return {
     editorContent: state.editor.editorContent,
-    theme:         state.uiStyle.theme,
+    theme: state.uiStyle.theme,
   };
 }
 
 function mapDispatchToProps(dispatch: AppDispatch) {
   return {
-    setEditorContent: (newValue: string) => dispatch(setEditorContent(newValue)),
+    setEditorContent: (newValue: string) =>
+      dispatch(setEditorContent(newValue)),
   };
 }
 
-type Props = ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>;
+type Props = ReturnType<typeof mapStateToProps> &
+  ReturnType<typeof mapDispatchToProps>;
 
 function Editor(props: Props) {
   return (

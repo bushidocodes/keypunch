@@ -65,7 +65,11 @@ export interface KeypunchJesApi {
   deleteJob(config: FtpConfig, jobID: string): Promise<string>;
   listDatasets(config: FtpConfig): Promise<string[]>;
   listMembers(config: FtpConfig, dsname: string): Promise<string[]>;
-  retrieveMember(config: FtpConfig, dsname: string, member: string): Promise<string>;
+  retrieveMember(
+    config: FtpConfig,
+    dsname: string,
+    member: string
+  ): Promise<string>;
   /**
    * Atomic compound operation: lists all datasets and all their members in a
    * single IPC call so concurrent operations (e.g. pollJobStatus) cannot
@@ -82,7 +86,11 @@ export interface KeypunchApi {
   // Returns { path, content } or null if the user cancelled.
   openFile(): Promise<OpenFileResult | null>;
   // Returns the saved path or null. Shows a Save dialog unless (overwrite && path).
-  saveFile(content: string, path: string | null, overwrite: boolean): Promise<string | null>;
+  saveFile(
+    content: string,
+    path: string | null,
+    overwrite: boolean
+  ): Promise<string | null>;
   // Returns true if the user confirmed the submit message box.
   confirmSubmit(): Promise<boolean>;
   // Generic yes/no confirm; resolves true when the action button is chosen.
@@ -97,5 +105,3 @@ declare global {
     keypunch: KeypunchApi;
   }
 }
-
-export {};

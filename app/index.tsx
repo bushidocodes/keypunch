@@ -3,13 +3,16 @@ import { Provider } from 'react-redux';
 import { RouterProvider } from 'react-router-dom';
 import router from './routes';
 import configureStore from './store/configureStore';
-import { openFilePicker, newFile, saveFile } from './utils/nativeDialogs';
 import jes from './utils/jesFtp';
+import { newFile, openFilePicker, saveFile } from './utils/nativeDialogs';
 import './app.global.css';
 
 // Restore persisted theme from localStorage so the user's preference survives
 // restarts. Defaults to 'dark' if nothing is stored.
-const savedTheme = localStorage.getItem('keypunch:theme') as 'dark' | 'light' | null;
+const savedTheme = localStorage.getItem('keypunch:theme') as
+  | 'dark'
+  | 'light'
+  | null;
 export const store = configureStore(
   savedTheme ? { uiStyle: { theme: savedTheme } } : undefined
 );
@@ -30,12 +33,23 @@ store.subscribe(() => {
 if (window.keypunch?.onMenu) {
   window.keypunch.onMenu((channel) => {
     switch (channel) {
-      case 'file:new':    newFile();          break;
-      case 'file:open':   openFilePicker();   break;
-      case 'file:save':   saveFile(true);     break;
-      case 'file:saveAs': saveFile(false);    break;
-      case 'kill-ftp':    jes.disconnect();   break;
-      default: break;
+      case 'file:new':
+        newFile();
+        break;
+      case 'file:open':
+        openFilePicker();
+        break;
+      case 'file:save':
+        saveFile(true);
+        break;
+      case 'file:saveAs':
+        saveFile(false);
+        break;
+      case 'kill-ftp':
+        jes.disconnect();
+        break;
+      default:
+        break;
     }
   });
 }

@@ -16,22 +16,24 @@ import '@testing-library/jest-dom/vitest'; // extends vitest's expect with toBeI
 if (typeof window !== 'undefined') {
   window.keypunch = {
     jes: {
-      setCredentials:          vi.fn(() => Promise.resolve()),
-      connect:                 vi.fn(() => Promise.resolve('')),
-      disconnect:              vi.fn(() => Promise.resolve('')),
-      pollJobs:                vi.fn(() => Promise.resolve([])),
-      submitJob:               vi.fn(() => Promise.resolve('')),
-      retrieveJob:             vi.fn(() => Promise.resolve('')),
-      deleteJob:               vi.fn(() => Promise.resolve('')),
-      listDatasets:            vi.fn(() => Promise.resolve([])),
-      listMembers:             vi.fn(() => Promise.resolve([])),
-      listDatasetsWithMembers: vi.fn(() => Promise.resolve({ datasetRows: [], memberRowsByDs: {} })),
-      retrieveMember:          vi.fn(() => Promise.resolve('')),
+      setCredentials: vi.fn(() => Promise.resolve()),
+      connect: vi.fn(() => Promise.resolve('')),
+      disconnect: vi.fn(() => Promise.resolve('')),
+      pollJobs: vi.fn(() => Promise.resolve([])),
+      submitJob: vi.fn(() => Promise.resolve('')),
+      retrieveJob: vi.fn(() => Promise.resolve('')),
+      deleteJob: vi.fn(() => Promise.resolve('')),
+      listDatasets: vi.fn(() => Promise.resolve([])),
+      listMembers: vi.fn(() => Promise.resolve([])),
+      listDatasetsWithMembers: vi.fn(() =>
+        Promise.resolve({ datasetRows: [], memberRowsByDs: {} })
+      ),
+      retrieveMember: vi.fn(() => Promise.resolve('')),
     },
-    openFile:      vi.fn(() => Promise.resolve(null)),
-    saveFile:      vi.fn(() => Promise.resolve(null)),
+    openFile: vi.fn(() => Promise.resolve(null)),
+    saveFile: vi.fn(() => Promise.resolve(null)),
     confirmSubmit: vi.fn(() => Promise.resolve(false)),
-    confirm:       vi.fn(() => Promise.resolve(false)),
-    onMenu:        vi.fn(() => () => {}),
+    confirm: vi.fn(() => Promise.resolve(false)),
+    onMenu: vi.fn(() => () => {}),
   };
 }

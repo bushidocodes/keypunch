@@ -10,20 +10,30 @@
 //   npm run smoke      # in harness/  (requires: `npm run build` done + a display)
 
 import { spawn } from 'child_process';
-import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
+import { fileURLToPath } from 'url';
 
-const electronExe = fileURLToPath(new URL('../node_modules/electron/dist/electron.exe', import.meta.url));
+const electronExe = fileURLToPath(
+  new URL('../node_modules/electron/dist/electron.exe', import.meta.url)
+);
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
-const builtMain = fileURLToPath(new URL('../out/main/main.cjs', import.meta.url));
+const builtMain = fileURLToPath(
+  new URL('../out/main/main.cjs', import.meta.url)
+);
 const UPTIME_MS = Number(process.env.SMOKE_UPTIME_MS || 8000);
 
 if (!existsSync(electronExe)) {
-  console.error('FAIL: Electron binary not found at', electronExe, '\n  Run `npm install` at the repo root first.');
+  console.error(
+    'FAIL: Electron binary not found at',
+    electronExe,
+    '\n  Run `npm install` at the repo root first.'
+  );
   process.exit(1);
 }
 if (!existsSync(builtMain)) {
-  console.error('FAIL: out/main/main.cjs not found — run `npm run build` first.');
+  console.error(
+    'FAIL: out/main/main.cjs not found — run `npm run build` first.'
+  );
   process.exit(1);
 }
 
@@ -31,7 +41,7 @@ console.log('Boot smoke: launching built app via', electronExe);
 const child = spawn(electronExe, ['.'], {
   cwd: repoRoot,
   env: { ...process.env, NODE_ENV: 'production' },
-  stdio: 'inherit'
+  stdio: 'inherit',
 });
 
 let exited = false;
@@ -52,11 +62,17 @@ child.on('error', (err) => {
 setTimeout(() => {
   if (exited) return; // exit handler already decided
   terminating = true;
-  console.log(`PASS: app stayed up for ${UPTIME_MS}ms (booted without a fatal error). Terminating.`);
+  console.log(
+    `PASS: app stayed up for ${UPTIME_MS}ms (booted without a fatal error). Terminating.`
+  );
   if (process.platform === 'win32') {
     spawn('taskkill', ['/PID', String(child.pid), '/T', '/F']);
   } else if (child.pid != null) {
-    try { process.kill(-child.pid); } catch { child.kill('SIGKILL'); }
+    try {
+      process.kill(-child.pid);
+    } catch {
+      child.kill('SIGKILL');
+    }
   } else {
     child.kill('SIGKILL');
   }

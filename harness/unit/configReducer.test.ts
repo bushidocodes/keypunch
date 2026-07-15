@@ -1,13 +1,13 @@
-import { describe, it, expect } from 'vitest';
 import type { Reducer } from '@reduxjs/toolkit';
-import configReducer from '../../app/reducers/config';
+import { describe, expect, it } from 'vitest';
 import {
-  setHostName,
-  setFtpPort,
-  setFtpUserName,
   setFtpPassword,
+  setFtpPort,
   setFtpsEnabled,
+  setFtpUserName,
+  setHostName,
 } from '../../app/actions/configForm';
+import configReducer from '../../app/reducers/config';
 
 // The reducer is typed to its own narrow action union; widen to a generic
 // Reducer here so the synthetic `@@INIT` / unknown actions the tests dispatch

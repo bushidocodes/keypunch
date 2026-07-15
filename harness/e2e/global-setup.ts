@@ -15,7 +15,9 @@ const pathTxt = resolve(repoRoot, 'node_modules', 'electron', 'path.txt');
 
 export default async function globalSetup(): Promise<void> {
   if (!existsSync(pathTxt)) {
-    console.warn('\n[e2e] Electron binary absent — downloading now (ELECTRON_SKIP_BINARY_DOWNLOAD was set during install)…');
+    console.warn(
+      '\n[e2e] Electron binary absent — downloading now (ELECTRON_SKIP_BINARY_DOWNLOAD was set during install)…'
+    );
     execSync('pnpm install', { cwd: repoRoot, stdio: 'inherit' });
     console.log('[e2e] Electron binary ready.\n');
   }

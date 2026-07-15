@@ -20,9 +20,13 @@ export function newFile(): void {
 }
 
 export async function saveFile(overwrite = false): Promise<void> {
-  const currentPath   = store.getState().editor.editorPath;
+  const currentPath = store.getState().editor.editorPath;
   const editorContent = store.getState().editor.editorContent;
-  const savedPath = await window.keypunch.saveFile(editorContent, currentPath, overwrite);
+  const savedPath = await window.keypunch.saveFile(
+    editorContent,
+    currentPath,
+    overwrite
+  );
   if (savedPath) {
     store.dispatch(setEditorPath(savedPath));
   }
@@ -31,6 +35,6 @@ export async function saveFile(overwrite = false): Promise<void> {
 export async function testConnectivity(): Promise<void> {
   await jes.connect();
   if (!store.getState().results.isConnected) return;
-  await new Promise<void>(r => window.setTimeout(r, 1500));
+  await new Promise<void>((r) => window.setTimeout(r, 1500));
   await jes.disconnect();
 }

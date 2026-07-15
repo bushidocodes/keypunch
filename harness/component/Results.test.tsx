@@ -8,25 +8,38 @@
 //   • clicking a different job ID shows that job's properties
 //   • a job with downloaded results shows the AceEditor shim
 
-import { describe, it, expect, vi } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import Results from '../../app/components/Results';
-import { createTestStore, renderWithStore, type PreloadedTestState } from './testUtils';
+import {
+  createTestStore,
+  type PreloadedTestState,
+  renderWithStore,
+} from './testUtils';
 
 vi.mock('../../app/index', async () => {
   const { combineReducers, configureStore } = await import('@reduxjs/toolkit');
-  const { default: editor }   = await import('../../app/reducers/editor');
+  const { default: editor } = await import('../../app/reducers/editor');
   const { default: explorer } = await import('../../app/reducers/explorer');
-  const { default: config }   = await import('../../app/reducers/config');
-  const { default: results }  = await import('../../app/reducers/results');
-  const { default: uiStyle }  = await import('../../app/reducers/uiStyle');
-  const { default: jobs }     = await import('../../app/reducers/jobs');
+  const { default: config } = await import('../../app/reducers/config');
+  const { default: results } = await import('../../app/reducers/results');
+  const { default: uiStyle } = await import('../../app/reducers/uiStyle');
+  const { default: jobs } = await import('../../app/reducers/jobs');
   const { default: datasets } = await import('../../app/reducers/datasets');
-  const rootReducer = combineReducers({ editor, explorer, config, results, uiStyle, jobs, datasets });
+  const rootReducer = combineReducers({
+    editor,
+    explorer,
+    config,
+    results,
+    uiStyle,
+    jobs,
+    datasets,
+  });
   return {
     store: configureStore({
       reducer: rootReducer,
-      middleware: (gDM) => gDM({ immutableCheck: false, serializableCheck: false }),
+      middleware: (gDM) =>
+        gDM({ immutableCheck: false, serializableCheck: false }),
     }),
   };
 });
@@ -34,31 +47,31 @@ vi.mock('../../app/index', async () => {
 // Stub jesFtp so the pollJobStatus() useEffect doesn't try a real FTP poll.
 vi.mock('../../app/utils/jesFtp', () => ({
   default: {
-    deleteJob:       vi.fn(() => Promise.resolve()),
-    retrieveJob:     vi.fn(() => Promise.resolve()),
-    pollJobStatus:   vi.fn(() => Promise.resolve()),
-    connect:         vi.fn(() => Promise.resolve()),
-    disconnect:      vi.fn(() => Promise.resolve()),
-    listDatasets:    vi.fn(() => Promise.resolve()),
-    retrieveMember:  vi.fn(() => Promise.resolve()),
-    submitJob:       vi.fn(() => Promise.resolve()),
+    deleteJob: vi.fn(() => Promise.resolve()),
+    retrieveJob: vi.fn(() => Promise.resolve()),
+    pollJobStatus: vi.fn(() => Promise.resolve()),
+    connect: vi.fn(() => Promise.resolve()),
+    disconnect: vi.fn(() => Promise.resolve()),
+    listDatasets: vi.fn(() => Promise.resolve()),
+    retrieveMember: vi.fn(() => Promise.resolve()),
+    submitJob: vi.fn(() => Promise.resolve()),
   },
   pollJobStatus: vi.fn(),
-  listDatasets:  vi.fn(),
+  listDatasets: vi.fn(),
 }));
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 const JOB_ALPHA = {
-  jobID:              'JOB00001',
-  owner:              'IBMUSER',
-  status:             'OUTPUT',
+  jobID: 'JOB00001',
+  owner: 'IBMUSER',
+  status: 'OUTPUT',
   numberOfSpoolFiles: '3',
 };
 const JOB_BETA = {
-  jobID:              'JOB00002',
-  owner:              'IBMUSER',
-  status:             'ACTIVE',
+  jobID: 'JOB00002',
+  owner: 'IBMUSER',
+  status: 'ACTIVE',
   numberOfSpoolFiles: '0',
 };
 
@@ -98,7 +111,7 @@ describe('Results', () => {
       renderResults({
         jobs: {
           [JOB_ALPHA.jobID]: JOB_ALPHA,
-          [JOB_BETA.jobID]:  JOB_BETA,
+          [JOB_BETA.jobID]: JOB_BETA,
         },
       });
       expect(screen.getByText('JOB00001')).toBeInTheDocument();
@@ -107,7 +120,7 @@ describe('Results', () => {
   });
 
   describe('job detail panel', () => {
-    it('auto-selects and shows the first job\'s properties', () => {
+    it("auto-selects and shows the first job's properties", () => {
       renderResults({ jobs: { [JOB_ALPHA.jobID]: JOB_ALPHA } });
       expect(screen.getByText(/Job ID:.*JOB00001/)).toBeInTheDocument();
       expect(screen.getByText(/Owner:.*IBMUSER/)).toBeInTheDocument();
@@ -119,7 +132,7 @@ describe('Results', () => {
       renderResults({
         jobs: {
           [JOB_ALPHA.jobID]: JOB_ALPHA,
-          [JOB_BETA.jobID]:  JOB_BETA,
+          [JOB_BETA.jobID]: JOB_BETA,
         },
       });
       // Click the second job in the list
@@ -153,10 +166,15 @@ describe('Results', () => {
 
   describe('downloaded results', () => {
     it('shows the AceEditor shim with spool output when results are present', () => {
-      const jobWithResults = { ...JOB_ALPHA, results: '//STEP001 RC=0000\nHELLO MAINFRAME' };
+      const jobWithResults = {
+        ...JOB_ALPHA,
+        results: '//STEP001 RC=0000\nHELLO MAINFRAME',
+      };
       renderResults({ jobs: { JOB00001: jobWithResults } });
       // The AceEditor mock renders a <textarea data-testid="ace-editor-RESULTS">
-      const editor = screen.getByTestId('ace-editor-RESULTS') as HTMLTextAreaElement;
+      const editor = screen.getByTestId(
+        'ace-editor-RESULTS'
+      ) as HTMLTextAreaElement;
       expect(editor).toBeInTheDocument();
       expect(editor.value).toContain('HELLO MAINFRAME');
     });

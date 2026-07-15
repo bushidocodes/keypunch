@@ -2,8 +2,12 @@ body {
   position: relative;
   color: white;
   height: 100%;
-  background-color: #232C39;
-  font-family: Arial, Helvetica, Helvetica Neue, serif;
+  background-color: #232c39;
+  font-family:
+    Arial,
+    Helvetica,
+    Helvetica Neue,
+    serif;
   overflow-y: hidden;
   margin: 0px;
 }
@@ -17,7 +21,7 @@ h2 {
   margin: 0;
   font-size: 2.25rem;
   font-weight: bold;
-  letter-spacing: -.025em;
+  letter-spacing: -0.025em;
   color: #fff;
 }
 
@@ -31,7 +35,7 @@ li {
 
 a {
   color: white;
-  opacity: .75;
+  opacity: 0.75;
   text-decoration: none;
 }
 
@@ -87,7 +91,7 @@ a:hover {
   justify-content: center;
   width: 100%;
   padding: 8px 0;
-  opacity: .6;
+  opacity: 0.6;
 }
 
 .nav-item:hover {
@@ -155,10 +159,18 @@ a:hover {
   cursor: pointer;
 }
 
-.status-bar .btn-test       { background-color: #b06000; }
-.status-bar .btn-connect    { background-color: #2a7a2a; }
-.status-bar .btn-interrupt  { background-color: #C0101D; }
-.status-bar .btn-load       { background-color: #195DAE; }
+.status-bar .btn-test {
+  background-color: #b06000;
+}
+.status-bar .btn-connect {
+  background-color: #2a7a2a;
+}
+.status-bar .btn-interrupt {
+  background-color: #c0101d;
+}
+.status-bar .btn-load {
+  background-color: #195dae;
+}
 
 .status-bar .indicator-cell {
   font-size: 10px;
@@ -168,8 +180,12 @@ a:hover {
   text-align: center;
 }
 
-.theme-dark  .status-bar .indicator-cell { color: #e0e0e0; }
-.theme-light .status-bar .indicator-cell { color: #222222; }
+.theme-dark .status-bar .indicator-cell {
+  color: #e0e0e0;
+}
+.theme-light .status-bar .indicator-cell {
+  color: #222222;
+}
 
 .status-bar .indicator-light {
   margin-left: 9px;
@@ -235,8 +251,8 @@ a:hover {
 .explorer-tree {
   flex: 0 0 240px;
   overflow: auto;
-  background-color: #21252B;
-  color: #9DA5AB;
+  background-color: #21252b;
+  color: #9da5ab;
   padding: 4px 0;
 }
 
@@ -271,7 +287,7 @@ a:hover {
 }
 
 .tree-node:hover {
-  background-color: #31363F;
+  background-color: #31363f;
 }
 
 .theme-light .tree-node:hover {
@@ -305,8 +321,8 @@ a:hover {
   margin: 0;
   padding: 0;
   overflow: auto;
-  background-color: #21252B;
-  border-right: 1px solid #31363F;
+  background-color: #21252b;
+  border-right: 1px solid #31363f;
 }
 
 .theme-light .results-list {
@@ -326,7 +342,7 @@ a:hover {
 }
 
 .results-list-item:hover {
-  background-color: #31363F;
+  background-color: #31363f;
 }
 
 .theme-light .results-list-item:hover {
@@ -334,7 +350,7 @@ a:hover {
 }
 
 .results-list-item-active {
-  background-color: #31363F;
+  background-color: #31363f;
   color: #ffffff;
 }
 
@@ -371,7 +387,7 @@ a:hover {
 }
 
 .results-btn-delete {
-  background-color: #C0101D;
+  background-color: #c0101d;
 }
 
 .results-btn-download {

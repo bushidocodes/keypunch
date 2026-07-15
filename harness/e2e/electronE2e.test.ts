@@ -29,10 +29,10 @@
 // Nav note: the side nav is icon-only, so nav items are addressed by their
 // anchor index: 0=edit, 1=results, 2=explorer, 3=config.
 
-import { test, expect, _electron as electron } from '@playwright/test';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { fileURLToPath } from 'url';
+import { _electron as electron, expect, test } from '@playwright/test';
 import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
 import { createMockJesServer, type MockJesServer } from '../mock-server';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
@@ -49,7 +49,8 @@ let port: number;
 let electronApp: ElectronApplication;
 let win: Page;
 
-const nav = (which: keyof typeof NAV) => win.locator('a').nth(NAV[which]).click();
+const nav = (which: keyof typeof NAV) =>
+  win.locator('a').nth(NAV[which]).click();
 
 test.beforeAll(async () => {
   srv = createMockJesServer();
@@ -62,13 +63,16 @@ test.beforeAll(async () => {
     args: process.platform === 'linux' ? ['--no-sandbox', '.'] : ['.'],
     cwd: repoRoot,
     timeout: 45000,
-    env: { ...process.env, NODE_ENV: 'production' }
+    env: { ...process.env, NODE_ENV: 'production' },
   });
 
   // Stub native dialogs in main so confirmation message boxes auto-accept.
   await electronApp.evaluate(async ({ dialog }) => {
     // Always resolve as the "action" button (index 1).
-    dialog.showMessageBox = (async () => ({ response: 1, checkboxChecked: false })) as typeof dialog.showMessageBox;
+    dialog.showMessageBox = (async () => ({
+      response: 1,
+      checkboxChecked: false,
+    })) as typeof dialog.showMessageBox;
   });
 
   win = await electronApp.firstWindow();
@@ -83,13 +87,16 @@ test.afterAll(async () => {
 test('secure-model runtime assertions', async () => {
   // The renderer must be locked down: no Node, but the preload bridge present.
   const exposes = await win.evaluate(() => {
-    const w = window as typeof window & { require?: unknown; process?: unknown };
+    const w = window as typeof window & {
+      require?: unknown;
+      process?: unknown;
+    };
     return {
       hasBridge: typeof w.keypunch === 'object' && w.keypunch !== null,
       hasJes: !!(w.keypunch && w.keypunch.jes),
       hasOpenFile: !!(w.keypunch && typeof w.keypunch.openFile === 'function'),
       noRequire: typeof w.require === 'undefined',
-      noProcess: typeof w.process === 'undefined'
+      noProcess: typeof w.process === 'undefined',
     };
   });
   expect(exposes.hasBridge).toBe(true);
@@ -102,10 +109,18 @@ test('secure-model runtime assertions', async () => {
     const w = BrowserWindow.getAllWindows()[0];
     // getLastWebPreferences() is a runtime WebContents method that the current
     // Electron type definitions no longer expose; cast to call it unchanged.
-    const wp = (w.webContents as unknown as {
-      getLastWebPreferences(): { contextIsolation?: boolean; nodeIntegration?: boolean } | null;
-    }).getLastWebPreferences();
-    return { contextIsolation: wp?.contextIsolation, nodeIntegration: wp?.nodeIntegration };
+    const wp = (
+      w.webContents as unknown as {
+        getLastWebPreferences(): {
+          contextIsolation?: boolean;
+          nodeIntegration?: boolean;
+        } | null;
+      }
+    ).getLastWebPreferences();
+    return {
+      contextIsolation: wp?.contextIsolation,
+      nodeIntegration: wp?.nodeIntegration,
+    };
   });
   expect(secure.contextIsolation).toBe(true);
   expect(secure.nodeIntegration).toBe(false);
@@ -137,7 +152,9 @@ test('core user journey end to end', async () => {
 
   // --- Open a member into the editor: RETR HELLO loads its COBOL source. ---
   await win.getByText('HELLO').first().click();
-  await expect(win.locator('.ace_content')).toContainText('PROGRAM-ID', { timeout: 15000 });
+  await expect(win.locator('.ace_content')).toContainText('PROGRAM-ID', {
+    timeout: 15000,
+  });
 
   // --- Results pane (useEffect=pollJobStatus): the seeded JES queue renders.
   //     With react-desktop/#120 gone, the job list is real DOM we can assert. ---
@@ -150,7 +167,10 @@ test('core user journey end to end', async () => {
   // --- Submit ("LOAD" easy button): the editor contents are really STORed to
   //     the mainframe, creating a new job. Cross-check the authoritative mock
   //     server state in addition to the DOM. ---
-  expect(Object.keys(srv.state().jobs).sort()).toEqual(['JOB00045', 'JOB00046']);
+  expect(Object.keys(srv.state().jobs).sort()).toEqual([
+    'JOB00045',
+    'JOB00046',
+  ]);
   await win.getByText('LOAD', { exact: true }).click();
   await expect
     .poll(() => Object.keys(srv.state().jobs).length, { timeout: 15000 })

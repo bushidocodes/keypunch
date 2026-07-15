@@ -4,14 +4,14 @@ import 'ace-builds/src-noconflict/mode-cobol';
 import 'ace-builds/src-noconflict/theme-github';
 import 'ace-builds/src-noconflict/theme-twilight';
 import { connect } from 'react-redux';
-import jes, { pollJobStatus } from '../utils/jesFtp';
 import type { RootState } from '../reducers';
 import type { JobEntry } from '../reducers/jobs';
+import jes, { pollJobStatus } from '../utils/jesFtp';
 
 function mapStateToProps(state: RootState) {
   return {
-    jobs:        state.jobs,
-    theme:       state.uiStyle.theme,
+    jobs: state.jobs,
+    theme: state.uiStyle.theme,
     isConnected: state.results.isConnected,
   };
 }
@@ -41,7 +41,8 @@ function mapDispatchToProps() {
   };
 }
 
-type Props = ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>;
+type Props = ReturnType<typeof mapStateToProps> &
+  ReturnType<typeof mapDispatchToProps>;
 
 // Plain two-pane list + detail layout (replaces react-desktop's
 // MasterDetailsView, whose React-15 reconciliation threw error #120 when the
@@ -66,14 +67,20 @@ function Results(props: Props) {
   if (jobIDs.length === 0) {
     return (
       <div className="results">
-        {props.isConnected
-          ? <p className="results-empty">Connected, but the Mainframe queue is empty</p>
-          : <p className="results-empty">Connect and Refresh to see results!</p>}
+        {props.isConnected ? (
+          <p className="results-empty">
+            Connected, but the Mainframe queue is empty
+          </p>
+        ) : (
+          <p className="results-empty">Connect and Refresh to see results!</p>
+        )}
       </div>
     );
   }
 
-  const activeJob: JobEntry | null = activeJobID ? (props.jobs[activeJobID] ?? null) : null;
+  const activeJob: JobEntry | null = activeJobID
+    ? (props.jobs[activeJobID] ?? null)
+    : null;
 
   return (
     <div className="results">
@@ -117,7 +124,8 @@ function Results(props: Props) {
             >
               Delete
             </button>
-            {activeJob.numberOfSpoolFiles && Number(activeJob.numberOfSpoolFiles) > 0 ? (
+            {activeJob.numberOfSpoolFiles &&
+            Number(activeJob.numberOfSpoolFiles) > 0 ? (
               <button
                 className="results-btn results-btn-download"
                 onClick={() => props.retrieveJob(activeJobID!)}

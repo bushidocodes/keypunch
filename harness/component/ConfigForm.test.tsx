@@ -8,26 +8,35 @@
 //   • the theme radios default to "Dark" and switching works
 //   • the useEffect syncs credentials to main on mount
 
-import { describe, it, expect, vi } from 'vitest';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 import ConfigForm from '../../app/components/ConfigForm';
 import { createTestStore, renderWithStore } from './testUtils';
 
 vi.mock('../../app/index', async () => {
   const { combineReducers, configureStore } = await import('@reduxjs/toolkit');
-  const { default: editor }   = await import('../../app/reducers/editor');
+  const { default: editor } = await import('../../app/reducers/editor');
   const { default: explorer } = await import('../../app/reducers/explorer');
-  const { default: config }   = await import('../../app/reducers/config');
-  const { default: results }  = await import('../../app/reducers/results');
-  const { default: uiStyle }  = await import('../../app/reducers/uiStyle');
-  const { default: jobs }     = await import('../../app/reducers/jobs');
+  const { default: config } = await import('../../app/reducers/config');
+  const { default: results } = await import('../../app/reducers/results');
+  const { default: uiStyle } = await import('../../app/reducers/uiStyle');
+  const { default: jobs } = await import('../../app/reducers/jobs');
   const { default: datasets } = await import('../../app/reducers/datasets');
-  const rootReducer = combineReducers({ editor, explorer, config, results, uiStyle, jobs, datasets });
+  const rootReducer = combineReducers({
+    editor,
+    explorer,
+    config,
+    results,
+    uiStyle,
+    jobs,
+    datasets,
+  });
   return {
     store: configureStore({
       reducer: rootReducer,
-      middleware: (gDM) => gDM({ immutableCheck: false, serializableCheck: false }),
+      middleware: (gDM) =>
+        gDM({ immutableCheck: false, serializableCheck: false }),
     }),
   };
 });
@@ -54,7 +63,9 @@ describe('ConfigForm', () => {
 
     it('renders the FTPS checkbox unchecked by default', () => {
       renderWithStore(<ConfigForm />);
-      const checkbox = screen.getByRole('checkbox', { name: /Encrypt connection with AUTH TLS/i });
+      const checkbox = screen.getByRole('checkbox', {
+        name: /Encrypt connection with AUTH TLS/i,
+      });
       expect(checkbox).not.toBeChecked();
     });
 
@@ -94,7 +105,10 @@ describe('ConfigForm', () => {
       expect(store.getState().config.ftpUserName).toBe('IBMUSER');
       // setCredentials should have been called at least once more after typing
       await waitFor(() => {
-        expect(window.keypunch.jes.setCredentials).toHaveBeenCalledWith('IBMUSER', '');
+        expect(window.keypunch.jes.setCredentials).toHaveBeenCalledWith(
+          'IBMUSER',
+          ''
+        );
       });
     });
   });
@@ -103,20 +117,34 @@ describe('ConfigForm', () => {
     it('toggles ftpsEnabled in Redux state when checked', () => {
       const store = createTestStore();
       renderWithStore(<ConfigForm />, { store });
-      const checkbox = screen.getByRole('checkbox', { name: /Encrypt connection with AUTH TLS/i });
+      const checkbox = screen.getByRole('checkbox', {
+        name: /Encrypt connection with AUTH TLS/i,
+      });
       fireEvent.click(checkbox);
       expect(store.getState().config.ftpsEnabled).toBe(true);
     });
 
     it('shows the TLS-required hint when FTPS is enabled', () => {
-      const store = createTestStore({ config: { ftpsEnabled: true, hostName: '', ftpPort: '21', ftpUserName: '', ftpPassword: '' } });
+      const store = createTestStore({
+        config: {
+          ftpsEnabled: true,
+          hostName: '',
+          ftpPort: '21',
+          ftpUserName: '',
+          ftpPassword: '',
+        },
+      });
       renderWithStore(<ConfigForm />, { store });
-      expect(screen.getByText(/requires TLS-enabled z\/OS FTP server/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/requires TLS-enabled z\/OS FTP server/i)
+      ).toBeInTheDocument();
     });
 
     it('hides the TLS hint when FTPS is disabled', () => {
       renderWithStore(<ConfigForm />);
-      expect(screen.queryByText(/requires TLS-enabled z\/OS FTP server/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/requires TLS-enabled z\/OS FTP server/i)
+      ).not.toBeInTheDocument();
     });
   });
 

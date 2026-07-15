@@ -1,7 +1,7 @@
 name: CI
 
 # Run on every push to master and every PR.
-# - lint:          ESLint flat config over app/ + electron/ + harness/.
+# - lint:          Biome check over app/ + electron/ + harness/.
 # - typecheck:     tsc --noEmit over app/ + electron/ (root tsconfig).
 # - harness-tests: harness tsc typecheck + vitest unit + integration (mock FTP/JES round-trip).
 # - build:         electron-vite production build, asserting the main/preload/renderer artifacts.
@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   lint:
-    name: Lint (ESLint)
+    name: Lint (Biome)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

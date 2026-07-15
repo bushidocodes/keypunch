@@ -5,25 +5,38 @@
 //   • onChange dispatches setEditorContent to Redux state
 //   • the AceEditor shim receives the current editorContent as its value
 
-import { describe, it, expect, vi } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import Editor from '../../app/components/Editor';
-import { createTestStore, renderWithStore, type PreloadedTestState } from './testUtils';
+import {
+  createTestStore,
+  type PreloadedTestState,
+  renderWithStore,
+} from './testUtils';
 
 vi.mock('../../app/index', async () => {
   const { combineReducers, configureStore } = await import('@reduxjs/toolkit');
-  const { default: editor }   = await import('../../app/reducers/editor');
+  const { default: editor } = await import('../../app/reducers/editor');
   const { default: explorer } = await import('../../app/reducers/explorer');
-  const { default: config }   = await import('../../app/reducers/config');
-  const { default: results }  = await import('../../app/reducers/results');
-  const { default: uiStyle }  = await import('../../app/reducers/uiStyle');
-  const { default: jobs }     = await import('../../app/reducers/jobs');
+  const { default: config } = await import('../../app/reducers/config');
+  const { default: results } = await import('../../app/reducers/results');
+  const { default: uiStyle } = await import('../../app/reducers/uiStyle');
+  const { default: jobs } = await import('../../app/reducers/jobs');
   const { default: datasets } = await import('../../app/reducers/datasets');
-  const rootReducer = combineReducers({ editor, explorer, config, results, uiStyle, jobs, datasets });
+  const rootReducer = combineReducers({
+    editor,
+    explorer,
+    config,
+    results,
+    uiStyle,
+    jobs,
+    datasets,
+  });
   return {
     store: configureStore({
       reducer: rootReducer,
-      middleware: (gDM) => gDM({ immutableCheck: false, serializableCheck: false }),
+      middleware: (gDM) =>
+        gDM({ immutableCheck: false, serializableCheck: false }),
     }),
   };
 });
@@ -44,7 +57,9 @@ describe('Editor', () => {
   });
 
   it('passes current editorContent to the AceEditor shim', () => {
-    renderEditor({ editor: { editorContent: 'IDENTIFICATION DIVISION.', editorPath: '' } });
+    renderEditor({
+      editor: { editorContent: 'IDENTIFICATION DIVISION.', editorPath: '' },
+    });
     const ta = screen.getByTestId('ace-editor-EDITOR') as HTMLTextAreaElement;
     expect(ta.value).toContain('IDENTIFICATION DIVISION.');
   });

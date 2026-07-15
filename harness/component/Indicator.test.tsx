@@ -4,8 +4,8 @@
 // (unlitColor fill). When isBlinking=true it toggles lit state on a 200ms
 // interval. Tests use vi.useFakeTimers() to advance time deterministically.
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, act } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Indicator from '../../app/components/Indicator';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -29,12 +29,16 @@ describe('Indicator', () => {
     });
 
     it('respects custom unlitColor', () => {
-      const { container } = render(<Indicator isLit={false} unlitColor="#123456" />);
+      const { container } = render(
+        <Indicator isLit={false} unlitColor="#123456" />
+      );
       expect(circle(container).getAttribute('fill')).toBe('#123456');
     });
 
     it('respects custom litColor', () => {
-      const { container } = render(<Indicator isLit={true} litColor="#abcdef" />);
+      const { container } = render(
+        <Indicator isLit={true} litColor="#abcdef" />
+      );
       expect(circle(container).getAttribute('fill')).toBe('#abcdef');
     });
   });

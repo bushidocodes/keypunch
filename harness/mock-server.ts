@@ -13,9 +13,9 @@
 //   srv.reseed();                      // reset state to the baseline fixture
 //   await srv.close();
 
-import net from 'net';
 import { once } from 'events';
-import { makeFixture, type Fixture } from './fixture';
+import net from 'net';
+import { type Fixture, makeFixture } from './fixture';
 
 // Per-connection mutable protocol state.
 interface Conn {
@@ -50,7 +50,7 @@ export function createMockJesServer(): MockJesServer {
       filetype: null,
       currentDataset: null,
       dataServer: null,
-      dataSocketPromise: null
+      dataSocketPromise: null,
     };
     const DEBUG = !!process.env.MOCK_DEBUG;
     const send = (line: string): void => {
@@ -83,14 +83,24 @@ export function createMockJesServer(): MockJesServer {
         try {
           await handle(line);
         } catch (e) {
-          try { send('451 ' + (e instanceof Error ? e.message : String(e))); } catch { /* socket already closed */ }
+          try {
+            send('451 ' + (e instanceof Error ? e.message : String(e)));
+          } catch {
+            /* socket already closed */
+          }
         }
       }
       processing = false;
     }
 
     function openPasv(): void {
-      if (conn.dataServer) { try { conn.dataServer.close(); } catch { /* already closed */ } }
+      if (conn.dataServer) {
+        try {
+          conn.dataServer.close();
+        } catch {
+          /* already closed */
+        }
+      }
       const dataServer = net.createServer();
       conn.dataServer = dataServer;
       conn.dataSocketPromise = new Promise<net.Socket>((resolve) => {
@@ -102,14 +112,24 @@ export function createMockJesServer(): MockJesServer {
       });
       dataServer.listen(0, '127.0.0.1', () => {
         const port = (dataServer.address() as net.AddressInfo).port;
-        send(`227 Entering Passive Mode (127,0,0,1,${Math.floor(port / 256)},${port % 256}).`);
+        send(
+          `227 Entering Passive Mode (127,0,0,1,${Math.floor(port / 256)},${port % 256}).`
+        );
       });
     }
 
     async function sendOverData(payload: string): Promise<void> {
       const ds = await conn.dataSocketPromise;
       if (!ds) return;
-      if (DEBUG) console.error('  [data] writing', Buffer.byteLength(payload), 'bytes; writable=', ds.writable, 'destroyed=', ds.destroyed);
+      if (DEBUG)
+        console.error(
+          '  [data] writing',
+          Buffer.byteLength(payload),
+          'bytes; writable=',
+          ds.writable,
+          'destroyed=',
+          ds.destroyed
+        );
       // Write the payload and FIN our side. Resolve once the data is flushed —
       // do NOT wait for the client to close its half, or RETR deadlocks: the
       // client keeps the data socket open until it sees the 226 we send next.
@@ -147,19 +167,29 @@ export function createMockJesServer(): MockJesServer {
       const arg = sp === -1 ? '' : raw.slice(sp + 1).trim();
 
       switch (verb) {
-        case 'USER': return send('331 Send password.');
-        case 'PASS': return send('230 User logged in, proceed.');
-        case 'FEAT': socket.write('211-Features:\r\n211 End.\r\n'); return;
-        case 'SYST': return send('215 MVS is the operating system of this server.');
-        case 'OPTS': return send('200 OK.');
-        case 'NOOP': return send('200 OK.');
-        case 'TYPE': conn.type = arg; return send('200 Type set to ' + arg + '.');
+        case 'USER':
+          return send('331 Send password.');
+        case 'PASS':
+          return send('230 User logged in, proceed.');
+        case 'FEAT':
+          socket.write('211-Features:\r\n211 End.\r\n');
+          return;
+        case 'SYST':
+          return send('215 MVS is the operating system of this server.');
+        case 'OPTS':
+          return send('200 OK.');
+        case 'NOOP':
+          return send('200 OK.');
+        case 'TYPE':
+          conn.type = arg;
+          return send('200 Type set to ' + arg + '.');
         case 'SITE': {
           const m = /FILETYPE=(\w+)/i.exec(arg);
           if (m) conn.filetype = m[1].toUpperCase();
           return send('200 SITE command was accepted.');
         }
-        case 'PWD': return send(`257 "${conn.cwd}" is working directory.`);
+        case 'PWD':
+          return send(`257 "${conn.cwd}" is working directory.`);
         case 'CWD': {
           if (arg === '~' || arg === '') {
             conn.cwd = 'HOME';
@@ -170,7 +200,8 @@ export function createMockJesServer(): MockJesServer {
           }
           return send('250 Directory changed to ' + conn.cwd + '.');
         }
-        case 'PASV': return openPasv();
+        case 'PASV':
+          return openPasv();
         case 'LIST':
         case 'NLST': {
           send('150 Opening ASCII mode data connection for file list.');
@@ -195,8 +226,10 @@ export function createMockJesServer(): MockJesServer {
           if (conn.dataServer) conn.dataServer.close();
           if (conn.filetype === 'JES') {
             const id = 'JOB' + String(ctx.state.jobCounter++).padStart(5, '0');
-            ctx.state.jobs[id] = `${ctx.state.submitOwner} ${id} OUTPUT 1 Spool Files`;
-            ctx.state.jobOutputs[id] = `1 SUBMITTED JOB ${id}\n IEF142I ${id} - COND CODE 0000\n`;
+            ctx.state.jobs[id] =
+              `${ctx.state.submitOwner} ${id} OUTPUT 1 Spool Files`;
+            ctx.state.jobOutputs[id] =
+              `1 SUBMITTED JOB ${id}\n IEF142I ${id} - COND CODE 0000\n`;
           }
           return send('226 Transfer complete.');
         }
@@ -208,9 +241,14 @@ export function createMockJesServer(): MockJesServer {
           }
           return send('550 ' + arg + ': not found.');
         }
-        case 'MODE': return send('200 Mode set to ' + arg + '.');
-        case 'QUIT': send('221 Goodbye.'); socket.end(); return;
-        default: return send('502 Command ' + verb + ' not implemented.');
+        case 'MODE':
+          return send('200 Mode set to ' + arg + '.');
+        case 'QUIT':
+          send('221 Goodbye.');
+          socket.end();
+          return;
+        default:
+          return send('502 Command ' + verb + ' not implemented.');
       }
     }
   });
@@ -218,13 +256,19 @@ export function createMockJesServer(): MockJesServer {
   return {
     listen(port = 0) {
       return new Promise<number>((resolve) => {
-        server.listen(port, '127.0.0.1', () => resolve((server.address() as net.AddressInfo).port));
+        server.listen(port, '127.0.0.1', () =>
+          resolve((server.address() as net.AddressInfo).port)
+        );
       });
     },
-    reseed() { ctx.state = makeFixture(); },
-    state() { return ctx.state; },
+    reseed() {
+      ctx.state = makeFixture();
+    },
+    state() {
+      return ctx.state;
+    },
     close() {
       return new Promise<void>((resolve) => server.close(() => resolve()));
-    }
+    },
   };
 }

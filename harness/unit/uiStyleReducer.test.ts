@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
 import type { Reducer } from '@reduxjs/toolkit';
-import uiStyleReducer from '../../app/reducers/uiStyle';
+import { describe, expect, it } from 'vitest';
 import { setThemeDark, setThemeLight } from '../../app/actions/uiStyle';
+import uiStyleReducer from '../../app/reducers/uiStyle';
 
 const reducer = uiStyleReducer as Reducer<ReturnType<typeof uiStyleReducer>>;
 

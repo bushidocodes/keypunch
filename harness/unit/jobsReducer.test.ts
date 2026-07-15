@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
 import type { Reducer } from '@reduxjs/toolkit';
+import { describe, expect, it } from 'vitest';
+import { loadJobResults, refreshJobs } from '../../app/actions/jobs';
 import jobsReducer from '../../app/reducers/jobs';
-import { refreshJobs, loadJobResults } from '../../app/actions/jobs';
 import type { Job } from '../../app/utils/jesParse';
 
 const reducer = jobsReducer as Reducer<ReturnType<typeof jobsReducer>>;
@@ -31,7 +31,10 @@ describe('jobs reducer', () => {
   it('populates jobs on REFRESH_JOBS', () => {
     const jobs = { [JOB_A.jobID]: JOB_A };
     const state = reducer(undefined, refreshJobs(jobs));
-    expect(state[JOB_A.jobID]).toMatchObject({ jobID: 'JOB00001', status: 'OUTPUT' });
+    expect(state[JOB_A.jobID]).toMatchObject({
+      jobID: 'JOB00001',
+      status: 'OUTPUT',
+    });
   });
 
   it('preserves previously-downloaded results on re-poll (merge semantics)', () => {
@@ -50,13 +53,19 @@ describe('jobs reducer', () => {
 
   it('adds new jobs while keeping existing ones on REFRESH_JOBS', () => {
     let state = reducer(undefined, refreshJobs({ [JOB_A.jobID]: JOB_A }));
-    state = reducer(state, refreshJobs({ [JOB_A.jobID]: JOB_A, [JOB_B.jobID]: JOB_B }));
+    state = reducer(
+      state,
+      refreshJobs({ [JOB_A.jobID]: JOB_A, [JOB_B.jobID]: JOB_B })
+    );
     expect(Object.keys(state)).toHaveLength(2);
   });
 
   it('removes jobs that are absent from the new snapshot (replace semantics)', () => {
     // First poll: both jobs arrive.
-    let state = reducer(undefined, refreshJobs({ [JOB_A.jobID]: JOB_A, [JOB_B.jobID]: JOB_B }));
+    let state = reducer(
+      undefined,
+      refreshJobs({ [JOB_A.jobID]: JOB_A, [JOB_B.jobID]: JOB_B })
+    );
     // Second poll: only JOB_B is returned (JOB_A finished/purged on the server).
     state = reducer(state, refreshJobs({ [JOB_B.jobID]: JOB_B }));
     expect(state[JOB_A.jobID]).toBeUndefined();

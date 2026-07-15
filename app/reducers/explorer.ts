@@ -1,5 +1,5 @@
-import { SET_EXPLORER_CONTENT } from '../constants';
 import type { ExplorerAction } from '../actions/explorer';
+import { SET_EXPLORER_CONTENT } from '../constants';
 
 export interface ExplorerState {
   explorerContent: string;

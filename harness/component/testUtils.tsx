@@ -9,18 +9,21 @@
 // element wrapped in a Redux <Provider> and return the store alongside RTL's
 // render result so tests can inspect / dispatch to state.
 
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import {
+  type RenderOptions,
+  type RenderResult,
+  render,
+} from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
-import { render, type RenderOptions, type RenderResult } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { configureStore, combineReducers } from '@reduxjs/toolkit';
-
-import editor   from '../../app/reducers/editor';
-import explorer from '../../app/reducers/explorer';
-import config   from '../../app/reducers/config';
-import results  from '../../app/reducers/results';
-import uiStyle  from '../../app/reducers/uiStyle';
-import jobs     from '../../app/reducers/jobs';
+import config from '../../app/reducers/config';
 import datasets from '../../app/reducers/datasets';
+import editor from '../../app/reducers/editor';
+import explorer from '../../app/reducers/explorer';
+import jobs from '../../app/reducers/jobs';
+import results from '../../app/reducers/results';
+import uiStyle from '../../app/reducers/uiStyle';
 
 const rootReducer = combineReducers({
   editor,
@@ -56,7 +59,6 @@ export function createTestStore(preloadedState: PreloadedTestState = {}) {
     // form), so it rejects a real partial state. The reducers tolerate partial
     // preloaded slices at runtime; cast past the inference — the same reason
     // app/store/configureStore.ts takes its preloadedState as `any`.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     preloadedState: preloadedState as any,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({ immutableCheck: false, serializableCheck: false }),
@@ -71,7 +73,7 @@ interface RenderWithStoreOptions extends Omit<RenderOptions, 'wrapper'> {
 
 export function renderWithStore(
   ui: ReactElement,
-  options: RenderWithStoreOptions = {},
+  options: RenderWithStoreOptions = {}
 ): RenderResult & { store: TestStore } {
   const { store = createTestStore(), ...renderOptions } = options;
 

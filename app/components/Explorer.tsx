@@ -4,9 +4,9 @@ import 'ace-builds/src-noconflict/mode-cobol';
 import 'ace-builds/src-noconflict/theme-github';
 import 'ace-builds/src-noconflict/theme-twilight';
 import { connect } from 'react-redux';
+import type { RootState } from '../reducers';
 import jesFtp, { listDatasets } from '../utils/jesFtp';
 import type { Dataset, Member } from '../utils/jesParse';
-import type { RootState } from '../reducers';
 
 // Minimal custom collapsible tree (replaces react-treebeard, which is
 // unmaintained and React-18-incompatible). It preserves the data shape produced
@@ -33,7 +33,7 @@ export function DatasetTree({ datasets, onSelectMember }: DatasetTreeProps) {
   return (
     <ul className="tree">
       {nodes.map((dataset) => {
-        const isOpen  = !!expanded[dataset.name];
+        const isOpen = !!expanded[dataset.name];
         const members = dataset.children || [];
         return (
           <li key={dataset.name} className="tree-dataset">
@@ -67,8 +67,8 @@ export function DatasetTree({ datasets, onSelectMember }: DatasetTreeProps) {
 
 function mapStateToProps(state: RootState) {
   return {
-    datasets:        state.datasets,
-    theme:           state.uiStyle.theme,
+    datasets: state.datasets,
+    theme: state.uiStyle.theme,
     explorerContent: state.explorer.explorerContent,
   };
 }
@@ -89,7 +89,10 @@ function Explorer(props: Props) {
   return (
     <div className="explorer">
       <div className="explorer-tree">
-        <DatasetTree datasets={props.datasets} onSelectMember={onSelectMember} />
+        <DatasetTree
+          datasets={props.datasets}
+          onSelectMember={onSelectMember}
+        />
       </div>
       <div className="explorer-editor">
         <AceEditor

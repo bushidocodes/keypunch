@@ -13,11 +13,17 @@ const port = await srv.listen(PORT);
 console.log(`Mock z/OS FTP/JES server listening on 127.0.0.1:${port}`);
 console.log('');
 console.log('Point Keypunch Config at:');
-console.log(`    host = 127.0.0.1   port = ${port}   user = IBMUSER   password = (anything)`);
+console.log(
+  `    host = 127.0.0.1   port = ${port}   user = IBMUSER   password = (anything)`
+);
 console.log('');
 console.log('Seeded baseline:');
-console.log('    Jobs:     JOB00045 (OUTPUT, 3 spool files), JOB00046 (ACTIVE)');
-console.log('    Datasets: IBMUSER.SOURCE (PO; members HELLO, COBOL1), IBMUSER.JCL (PS)');
+console.log(
+  '    Jobs:     JOB00045 (OUTPUT, 3 spool files), JOB00046 (ACTIVE)'
+);
+console.log(
+  '    Datasets: IBMUSER.SOURCE (PO; members HELLO, COBOL1), IBMUSER.JCL (PS)'
+);
 console.log('');
 console.log('Press Ctrl+C to stop.');
 

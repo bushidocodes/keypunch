@@ -13,23 +13,23 @@
 // Parsing stays here in the renderer so the harness unit tests for jesParse
 // remain valid.
 
-import { store } from '../index';
+import { refreshDatasets } from '../actions/datasets';
+import { setExplorerContent } from '../actions/explorer';
+import { loadJobResults, refreshJobs } from '../actions/jobs';
 import {
+  setErrorMessage,
   setIsConnected,
   setIsConnecting,
-  setIsSubmitted,
-  setIsSubmitting,
-  setIsRetrieved,
-  setIsRetrieving,
   setIsDisconnected,
   setIsDisconnecting,
-  setErrorMessage,
+  setIsRetrieved,
+  setIsRetrieving,
+  setIsSubmitted,
+  setIsSubmitting,
 } from '../actions/results';
-import { refreshJobs, loadJobResults } from '../actions/jobs';
-import { setExplorerContent } from '../actions/explorer';
-import { refreshDatasets } from '../actions/datasets';
-import { parseJobs, parseDatasets, parseMembers } from './jesParse';
+import { store } from '../index';
 import type { FtpConfig } from '../keypunch';
+import { parseDatasets, parseJobs, parseMembers } from './jesParse';
 
 // Pull the FTP config out of Redux. Password is intentionally excluded —
 // it is stored in the main process via jes:setCredentials and must not be
@@ -37,8 +37,8 @@ import type { FtpConfig } from '../keypunch';
 function getConfig(): FtpConfig {
   const { config } = store.getState();
   return {
-    hostName:    config.hostName,
-    ftpPort:     config.ftpPort,
+    hostName: config.hostName,
+    ftpPort: config.ftpPort,
     ftpUserName: config.ftpUserName,
     ftpsEnabled: config.ftpsEnabled,
   };
@@ -50,15 +50,15 @@ function bridge() {
 
 class JES {
   constructor() {
-    this.connect       = this.connect.bind(this);
-    this.disconnect    = this.disconnect.bind(this);
+    this.connect = this.connect.bind(this);
+    this.disconnect = this.disconnect.bind(this);
     this.pollJobStatus = this.pollJobStatus.bind(this);
-    this.submitJob     = this.submitJob.bind(this);
-    this.deleteJob     = this.deleteJob.bind(this);
-    this.retrieveJob   = this.retrieveJob.bind(this);
-    this.listDatasets  = this.listDatasets.bind(this);
+    this.submitJob = this.submitJob.bind(this);
+    this.deleteJob = this.deleteJob.bind(this);
+    this.retrieveJob = this.retrieveJob.bind(this);
+    this.listDatasets = this.listDatasets.bind(this);
     this.retrieveMember = this.retrieveMember.bind(this);
-    this._errorLookup  = this._errorLookup.bind(this);
+    this._errorLookup = this._errorLookup.bind(this);
   }
 
   // Connect if not already connected.
@@ -165,7 +165,8 @@ class JES {
       // atomic operation in the main-process FTP queue.  A concurrent
       // pollJobStatus can no longer interleave its FTP commands between the
       // individual member-listing calls (fixes issue #2).
-      const { datasetRows, memberRowsByDs } = await bridge().listDatasetsWithMembers(getConfig());
+      const { datasetRows, memberRowsByDs } =
+        await bridge().listDatasetsWithMembers(getConfig());
       store.dispatch(setIsConnecting(false));
       store.dispatch(setIsConnected(true));
       // parseDatasets throws on an unreadable listing and drops the header row.
@@ -189,7 +190,11 @@ class JES {
     store.dispatch(setIsSubmitting(true));
     store.dispatch(setIsRetrieving(true));
     try {
-      const content = await bridge().retrieveMember(getConfig(), datasetName, memberName);
+      const content = await bridge().retrieveMember(
+        getConfig(),
+        datasetName,
+        memberName
+      );
       store.dispatch(setExplorerContent(content));
       store.dispatch(setIsRetrieved(true));
       store.dispatch(setIsSubmitting(false));
@@ -215,4 +220,4 @@ export default jes;
 // react-router `onEnter` handlers exported as named exports so routes and
 // components can import them directly.
 export const pollJobStatus = jes.pollJobStatus;
-export const listDatasets  = jes.listDatasets;
+export const listDatasets = jes.listDatasets;

@@ -1,8 +1,8 @@
 import { createHashRouter } from 'react-router-dom';
 import App from './components/App';
+import ConfigForm from './components/ConfigForm';
 import Editor from './components/Editor';
 import Explorer from './components/Explorer';
-import ConfigForm from './components/ConfigForm';
 import Results from './components/Results';
 
 // HashRouter (createHashRouter) is required because the packaged app loads via
@@ -16,11 +16,11 @@ const router = createHashRouter([
     path: '/',
     element: <App />,
     children: [
-      { index: true,          element: <Editor />     },
-      { path: 'editor',       element: <Editor />     },
-      { path: 'config',       element: <ConfigForm /> },
-      { path: 'results',      element: <Results />    },
-      { path: 'explorer',     element: <Explorer />   },
+      { index: true, element: <Editor /> },
+      { path: 'editor', element: <Editor /> },
+      { path: 'config', element: <ConfigForm /> },
+      { path: 'results', element: <Results /> },
+      { path: 'explorer', element: <Explorer /> },
     ],
   },
 ]);

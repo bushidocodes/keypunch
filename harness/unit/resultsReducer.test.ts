@@ -1,12 +1,12 @@
-import { describe, it, expect } from 'vitest';
 import type { Reducer } from '@reduxjs/toolkit';
-import resultsReducer from '../../app/reducers/results';
+import { describe, expect, it } from 'vitest';
 import {
+  setCurrentStep,
   setIsConnected,
   setIsConnecting,
   setResultsContent,
-  setCurrentStep
 } from '../../app/actions/results';
+import resultsReducer from '../../app/reducers/results';
 
 const reducer = resultsReducer as Reducer<ReturnType<typeof resultsReducer>>;
 
@@ -18,7 +18,7 @@ describe('results reducer', () => {
       isConnected: false,
       isConnecting: false,
       isSubmitting: false,
-      isRetrieving: false
+      isRetrieving: false,
     });
   });
 
@@ -45,6 +45,9 @@ describe('results reducer', () => {
   });
 
   it('action creators produce the documented shape', () => {
-    expect(setIsConnecting(true)).toEqual({ type: 'SET_IS_CONNECTING', isConnecting: true });
+    expect(setIsConnecting(true)).toEqual({
+      type: 'SET_IS_CONNECTING',
+      isConnecting: true,
+    });
   });
 });
