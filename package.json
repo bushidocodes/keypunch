@@ -95,9 +95,9 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.9.0",
     "ace-builds": "^1.43.0",
-    "basic-ftp": "^6.0.1",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
+    "basic-ftp": "^6.0.2",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.18.1"
   }
