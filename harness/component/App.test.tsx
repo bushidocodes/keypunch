@@ -5,7 +5,7 @@
 // Tests use MemoryRouter so we can control the active route.
 
 import { screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import App from '../../app/components/App';
 import {

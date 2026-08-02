@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
-import { RouterProvider } from 'react-router-dom';
+import { RouterProvider } from 'react-router';
 import router from './routes';
 import configureStore from './store/configureStore';
 import jes from './utils/jesFtp';
