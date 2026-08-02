@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router';
 import type { RootState } from '../reducers';
 import { renderIcon } from '../utils/renderIcon';
 import StatusBar from './StatusBar';

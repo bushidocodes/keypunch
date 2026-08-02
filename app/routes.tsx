@@ -1,4 +1,4 @@
-import { createHashRouter } from 'react-router-dom';
+import { createHashRouter } from 'react-router';
 import App from './components/App';
 import ConfigForm from './components/ConfigForm';
 import Editor from './components/Editor';
