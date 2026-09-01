@@ -24,6 +24,6 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
-    "basic-ftp": "^6.0.2"
+    "basic-ftp": "^6.2.0"
   }
 }
