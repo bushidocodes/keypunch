@@ -21,7 +21,7 @@
     "jsdom": "^29.1.1",
     "tsx": "^4.23.1",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.3"
   },
   "dependencies": {
     "basic-ftp": "^6.0.2"
