@@ -83,8 +83,8 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.5",
     "@types/node": "^26.1.1",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.0.4",
     "electron": "^43.2.0",
     "electron-builder": "^26.15.3",
@@ -93,12 +93,12 @@
     "vite": "^8.1.5"
   },
   "dependencies": {
-    "@reduxjs/toolkit": "^2.9.0",
-    "ace-builds": "^1.43.0",
-    "basic-ftp": "^6.0.2",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
+    "@reduxjs/toolkit": "^2.13.0",
+    "ace-builds": "^1.45.2",
+    "basic-ftp": "^6.2.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "react-redux": "^9.2.0",
-    "react-router": "^8.3.0"
+    "react-router": "^8.5.0"
   }
 }
