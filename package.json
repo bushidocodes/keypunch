@@ -23,7 +23,6 @@
   "build": {
     "productName": "Keypunch",
     "appId": "com.bushidocodes.keypunch",
-    "category": "public.app-category.tools",
     "files": [
       "out/**/*",
       "package.json"
@@ -48,6 +47,7 @@
       "output": "release"
     },
     "mac": {
+      "category": "public.app-category.tools",
       "icon": "resources/icons/1024x1024.png"
     },
     "win": {
