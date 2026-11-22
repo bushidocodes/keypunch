@@ -21,9 +21,9 @@ const sharedVite = {
   },
   resolve: {
     // Deduplicate ensures vite uses a single pre-bundled copy of each package.
-    // react + react-dom are NOT in harness/node_modules — they live only in the
-    // project root's node_modules so every import resolves to the same file
-    // regardless of which package originates the import.
+    // react + react-dom come from the shared pnpm catalog (pnpm-workspace.yaml)
+    // for both the app and the harness, so there is exactly one copy on disk
+    // and app components and @testing-library/react share the same instance.
     dedupe: ['react', 'react-dom', 'react-redux', '@reduxjs/toolkit'],
 
     alias: [
